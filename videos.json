@@ -1,5 +1,14 @@
 [
-    "denouement.mp4",
-    "bloodbath.mp4",
-    "eastside.mp4"
+    {
+        "file": "eastside.mp4",
+        "src": "https://drive.google.com/uc?export=download&id=1Ii6MYyw2oOWXDH7m9_LSV1UPjIiNNqSs"
+    },
+    {
+        "file": "bloodbath.mp4",
+        "src": "https://drive.google.com/uc?export=download&id=1WoD4Z9EajFkjY4NZ4sPVUePkT9ym_HCA"
+    },
+    {
+        "file": "denoument.mp4",
+        "src": "https://drive.google.com/uc?export=download&id=1BALglQe_xocSpE4iGaO40gyB6AxhZk3k"
+    }
 ]

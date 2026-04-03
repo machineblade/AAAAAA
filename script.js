@@ -99,39 +99,39 @@ async function loadVideos() {
         const res = await fetch('./videos.json');
         if (!res.ok) throw new Error(`videos.json fetch failed: ${res.status}`);
 
-        const files = await res.json();
-        const items = (Array.isArray(files) ? files : [])
-            .filter(file => typeof file === 'string' && file.trim())
-            .map(file => ({
-                file: file.trim(),
-                src: `videos/${file.trim()}`,
-                title: titleFromFile(file)
-            }));
+        const items = await res.json();
+        const videos = Array.isArray(items) ? items : [];
 
         const html = [];
 
-        for (const video of items) {
+        for (const video of videos) {
+            const src = typeof video.src === 'string' ? video.src.trim() : '';
+            const file = typeof video.file === 'string' ? video.file.trim() : 'video.mp4';
+            const title = titleFromFile(file);
+
             let thumb = '';
             try {
-                thumb = await captureFirstFrame(video.src);
+                thumb = await captureFirstFrame(src);
             } catch { }
 
             html.push(`
-        <div class="video-card reveal" data-src="${video.src}" data-title="${video.title}">
-          <div class="video-card-thumb">
-            ${thumb
-                    ? `<img class="video-card-img" src="${thumb}" alt="${video.title} thumbnail">`
+                <div class="video-card reveal" data-src="${src}" data-title="${title}">
+                    <div class="video-card-thumb">
+                        ${thumb
+                    ? `<img class="video-card-img" src="${thumb}" alt="${title} thumbnail">`
                     : `<div style="font-size:3rem;padding:2rem;opacity:.2;">🎬</div>`
                 }
-          </div>
-          <div class="video-card-info">
-            <h3>${video.title}</h3>
-            <div class="video-card-meta">
-              <span>${video.file}</span>
-            </div>
-          </div>
-        </div>
-      `);
+                    </div>
+                    <div class="video-card-info">
+                        <h3>${title}</h3>
+                        <div class="video-card-meta">
+                            <span>${file}</span>
+                            <span>•</span>
+                            <span>Google Drive</span>
+                        </div>
+                    </div>
+                </div>
+            `);
         }
 
         videosGrid.innerHTML = html.join('') || '<p style="text-align:center;color:var(--muted);">No videos found.</p>';
@@ -163,16 +163,16 @@ async function loadGames() {
         renderFeaturedGame(data.featured || games[0]);
 
         gamesGrid.innerHTML = games.map(game => `
-      <div class="game-card reveal" data-url="/games/${game.folder}/index.html">
-        <div class="game-card-thumb">
-          <img class="game-card-img" src="/games/${game.folder}/thumbnail.png" alt="${game.title} thumbnail">
-        </div>
-        <div class="game-card-info">
-          <h3>${game.title}</h3>
-          <p>${game.description || ''}</p>
-        </div>
-      </div>
-    `).join('') || '<p style="text-align:center;color:var(--muted);">No games found.</p>';
+            <div class="game-card reveal" data-url="/games/${game.folder}/index.html">
+                <div class="game-card-thumb">
+                    <img class="game-card-img" src="/games/${game.folder}/thumbnail.png" alt="${game.title} thumbnail">
+                </div>
+                <div class="game-card-info">
+                    <h3>${game.title}</h3>
+                    <p>${game.description || ''}</p>
+                </div>
+            </div>
+        `).join('') || '<p style="text-align:center;color:var(--muted);">No games found.</p>';
 
         gamesGrid.querySelectorAll('.game-card').forEach(card => {
             card.addEventListener('click', () => {
