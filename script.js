@@ -117,10 +117,10 @@ async function loadVideos() {
 
         const files = await res.json();
         const items = (Array.isArray(files) ? files : [])
-            .filter(f => typeof f === 'string' && f.trim())
-            .map(f => { const s = f.trim(); return { file: s, src: s.startsWith('http') ? s : `videos/${s}`, title: titleFromFilename(s) }; });
+            .filter(f => f && f.url)
+            .map(f => ({ file: f.url, src: f.url, title: f.name || titleFromFilename(f.url) }));
 
-        log.videoNames = items.map(v => v.file);
+        log.videoNames = items.map(v => v.title);
 
         if (!items.length) {
             videosGrid.innerHTML = '<p class="empty-msg">No videos found.</p>';

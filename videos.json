@@ -1,4 +1,10 @@
 [
-    "https://files.catbox.moe/ttcx3n.mp4",
-    "https://files.catbox.moe/u4u0gb.mp4"
+    {
+        "name": "Bloodbath",
+        "url": "https://files.catbox.moe/ttcx3n.mp4"
+    },
+    {
+        "name": "Denouement",
+        "url": "https://files.catbox.moe/u4u0gb.mp4"
+    }
 ]
