@@ -3,10 +3,17 @@ const mobileMenu = document.getElementById('mobileMenu');
 const nav = document.getElementById('nav');
 const videosGrid = document.getElementById('videosGrid');
 const gamesGrid = document.getElementById('gamesGrid');
-const videoModal = document.getElementById('videoModal');
-const modalClose = document.getElementById('modalClose');
+
+const videoModalOverlay = document.getElementById('videoModal');
+const videoModal = videoModalOverlay.querySelector('.video-modal');
+const videoClose = document.getElementById('videoClose');
 const modalVideo = document.getElementById('modalVideo');
 const modalTitle = document.getElementById('modalTitle');
+
+const gameModalOverlay = document.getElementById('gameModal');
+const gameModalBox = document.getElementById('gameModalBox');
+const gameClose = document.getElementById('gameClose');
+const gameFrame = document.getElementById('gameFrame');
 
 hamburger.addEventListener('click', () => {
     hamburger.classList.toggle('open');
@@ -118,7 +125,8 @@ async function loadVideos() {
             card.addEventListener('click', () => {
                 modalVideo.src = card.dataset.src;
                 modalTitle.textContent = card.dataset.title;
-                videoModal.classList.add('open');
+                videoModalOverlay.classList.add('open');
+                requestAnimationFrame(() => videoModalOverlay.classList.add('open'));
                 modalVideo.play().catch(() => { });
             });
         });
@@ -139,14 +147,28 @@ async function loadGames() {
         const items = Array.isArray(games) ? games : [];
 
         gamesGrid.innerHTML = items.map(game => `
-      <a class="game-card reveal" href="/games/${game.folder}/index.html">
+      <div class="game-card reveal" data-url="/games/${game.folder}/index.html">
+        <div class="game-card-thumb">
+          ${game.image
+                ? `<img class="game-card-img" src="${game.image}" alt="${game.title}">`
+                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;font-size:2rem;">🎮</div>`
+            }
+        </div>
         <div class="game-card-info">
           <h3>${game.title}</h3>
           <p>${game.description || ''}</p>
-          <div class="btn btn--primary game-card-link">Play</div>
         </div>
-      </a>
+      </div>
     `).join('') || '<p style="text-align:center;color:var(--muted);">No games found.</p>';
+
+        gamesGrid.querySelectorAll('.game-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const url = card.dataset.url;
+                gameFrame.src = url;
+                gameModalOverlay.classList.add('open');
+                requestAnimationFrame(() => gameModalBox.classList.add('open'));
+            });
+        });
 
         document.querySelectorAll('.game-card.reveal').forEach(el => observer.observe(el));
     } catch (error) {
@@ -155,21 +177,38 @@ async function loadGames() {
     }
 }
 
-modalClose.onclick = () => {
-    videoModal.classList.remove('open');
+function closeVideoModal() {
+    videoModalOverlay.classList.remove('open');
     modalVideo.pause();
     modalVideo.removeAttribute('src');
     modalVideo.load();
-};
+}
 
-videoModal.onclick = (e) => {
-    if (e.target === videoModal) {
-        videoModal.classList.remove('open');
-        modalVideo.pause();
-        modalVideo.removeAttribute('src');
-        modalVideo.load();
+function closeGameModal() {
+    gameModalBox.classList.remove('open');
+    gameModalOverlay.classList.remove('open');
+    setTimeout(() => {
+        gameFrame.src = '';
+    }, 250);
+}
+
+videoClose.addEventListener('click', closeVideoModal);
+gameClose.addEventListener('click', closeGameModal);
+
+videoModalOverlay.addEventListener('click', (e) => {
+    if (e.target === videoModalOverlay) closeVideoModal();
+});
+
+gameModalOverlay.addEventListener('click', (e) => {
+    if (e.target === gameModalOverlay) closeGameModal();
+});
+
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeVideoModal();
+        closeGameModal();
     }
-};
+});
 
 window.addEventListener('load', () => {
     loadVideos();
