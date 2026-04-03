@@ -141,7 +141,6 @@ async function loadVideos() {
         </div>
         <div class="video-info">
           <h3>${item.title}</h3>
-          <span>${item.file}</span>
         </div>`;
             videosGrid.appendChild(card);
             revealObserver.observe(card);
