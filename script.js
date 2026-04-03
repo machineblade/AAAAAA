@@ -46,41 +46,8 @@ function titleFromFile(file) {
         .replace(/[-_]/g, ' ');
 }
 
-function captureFirstFrame(videoUrl) {
-    return new Promise((resolve, reject) => {
-        const video = document.createElement('video');
-        video.preload = 'auto';
-        video.muted = true;
-        video.playsInline = true;
-        video.crossOrigin = 'anonymous';
-        video.src = videoUrl;
-
-        const cleanup = () => {
-            video.removeAttribute('src');
-            video.load();
-        };
-
-        video.addEventListener('loadeddata', () => {
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth || 640;
-                canvas.height = video.videoHeight || 360;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const thumb = canvas.toDataURL('image/jpeg', 0.85);
-                cleanup();
-                resolve(thumb);
-            } catch (err) {
-                cleanup();
-                reject(err);
-            }
-        }, { once: true });
-
-        video.addEventListener('error', () => {
-            cleanup();
-            reject(new Error(`Failed to load ${videoUrl}`));
-        }, { once: true });
-    });
+function youtubeEmbedUrl(id) {
+    return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
 }
 
 function renderFeaturedGame(game) {
@@ -102,46 +69,37 @@ async function loadVideos() {
         const items = await res.json();
         const videos = Array.isArray(items) ? items : [];
 
-        const html = [];
-
-        for (const video of videos) {
-            const src = typeof video.src === 'string' ? video.src.trim() : '';
+        const html = videos.map(video => {
             const file = typeof video.file === 'string' ? video.file.trim() : 'video.mp4';
+            const id = typeof video.id === 'string' ? video.id.trim() : '';
             const title = titleFromFile(file);
-
-            let thumb = '';
-            try {
-                thumb = await captureFirstFrame(src);
-            } catch { }
-
-            html.push(`
-                <div class="video-card reveal" data-src="${src}" data-title="${title}">
+            return `
+                <div class="video-card reveal" data-video-id="${id}" data-title="${title}">
                     <div class="video-card-thumb">
-                        ${thumb
-                    ? `<img class="video-card-img" src="${thumb}" alt="${title} thumbnail">`
-                    : `<div style="font-size:3rem;padding:2rem;opacity:.2;">🎬</div>`
-                }
+                        <div style="font-size:3rem;padding:2rem;opacity:.2;">▶</div>
                     </div>
                     <div class="video-card-info">
                         <h3>${title}</h3>
                         <div class="video-card-meta">
                             <span>${file}</span>
                             <span>•</span>
-                            <span>Google Drive</span>
+                            <span>YouTube Unlisted</span>
                         </div>
                     </div>
                 </div>
-            `);
-        }
+            `;
+        }).join('');
 
-        videosGrid.innerHTML = html.join('') || '<p style="text-align:center;color:var(--muted);">No videos found.</p>';
+        videosGrid.innerHTML = html || '<p style="text-align:center;color:var(--muted);">No videos found.</p>';
 
         videosGrid.querySelectorAll('.video-card').forEach(card => {
             card.addEventListener('click', () => {
-                modalVideo.src = card.dataset.src;
+                const id = card.dataset.videoId;
+                if (!id) return;
+
+                modalVideo.src = youtubeEmbedUrl(id);
                 modalTitle.textContent = card.dataset.title;
                 videoModalOverlay.classList.add('open');
-                modalVideo.play().catch(() => { });
             });
         });
 
@@ -200,9 +158,7 @@ async function loadGames() {
 
 function closeVideoModal() {
     videoModalOverlay.classList.remove('open');
-    modalVideo.pause();
     modalVideo.removeAttribute('src');
-    modalVideo.load();
 }
 
 function closeGameModal() {
