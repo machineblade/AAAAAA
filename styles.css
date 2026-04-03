@@ -256,6 +256,7 @@ button {
     position: relative;
     min-height: 250px;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .hero-featured-thumb img {
@@ -531,11 +532,6 @@ button {
     color: var(--muted);
     font-size: 1.1rem;
     line-height: 1.7;
-}
-
-
-.hero-featured-thumb:hover {
-    cursor: pointer;
 }
 
 @media (max-width: 900px) {
