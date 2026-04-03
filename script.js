@@ -118,7 +118,7 @@ async function loadVideos() {
         const files = await res.json();
         const items = (Array.isArray(files) ? files : [])
             .filter(f => typeof f === 'string' && f.trim())
-            .map(f => ({ file: f.trim(), src: `videos/${f.trim()}`, title: titleFromFilename(f.trim()) }));
+            .map(f => { const s = f.trim(); return { file: s, src: s.startsWith('http') ? s : `videos/${s}`, title: titleFromFilename(s) }; });
 
         log.videoNames = items.map(v => v.file);
 
