@@ -203,7 +203,10 @@ async function loadVideos() {
                 modalVideo.src = card.dataset.src;
                 modalTitle.textContent = card.dataset.title;
                 videoModalOverlay.classList.add('open');
-                modalVideo.play().catch(() => { });
+                modalVideo.load();
+                modalVideo.addEventListener('canplay', () => {
+                    modalVideo.play().catch(() => { });
+                }, { once: true });
                 if (debugOpen) updateDebugInfo();
             });
         });
