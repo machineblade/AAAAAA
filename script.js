@@ -147,10 +147,7 @@ async function loadGames() {
         gamesGrid.innerHTML = items.map(game => `
       <div class="game-card reveal" data-url="/games/${game.folder}/index.html">
         <div class="game-card-thumb">
-          ${game.image
-                ? `<img class="game-card-img" src="${game.image}" alt="${game.title}">`
-                : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;font-size:2rem;">🎮</div>`
-            }
+          <img class="game-card-img" src="/games/${game.folder}/thumbnail.png" alt="${game.title} thumbnail">
         </div>
         <div class="game-card-info">
           <h3>${game.title} <span style="color:var(--accent);">•</span> ${game.description || ''}</h3>
