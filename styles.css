@@ -312,10 +312,11 @@ button {
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
-/* smaller game cards */
 .games-grid {
-    grid-template-columns: repeat(auto-fit, minmax(50px, 50px));
+    grid-template-columns: repeat(6, 300px);
     justify-content: start;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
 }
 
 .video-card,
@@ -345,7 +346,7 @@ button {
 .game-card-thumb {
     position: relative;
     width: 100%;
-    height: 500px;
+    height: 220px;
     background: var(--surface3);
     overflow: hidden;
 }
@@ -363,7 +364,7 @@ button {
 }
 
 .game-card-info {
-    padding: 0.2rem 0.25rem 0.3rem;
+    padding: 0.45rem 0.65rem 0.55rem;
 }
 
 .video-card-info h3,
@@ -378,10 +379,11 @@ button {
 }
 
 .game-card-info h3 {
-    font-size: 0.45rem;
+    font-size: 0.8rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin: 0;
 }
 
 .video-card-meta,
@@ -396,13 +398,12 @@ button {
     width: 100%;
     height: 1px;
     background: rgba(255, 255, 255, 0.08);
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.35rem;
 }
 
 .game-card-info p {
     line-height: 1.35;
-    font-size: 0.4rem;
-    margin-top: 0.1rem;
+    margin-top: 0.15rem;
 }
 
 .modal-close {
@@ -535,6 +536,10 @@ button {
 
     .hero-right {
         order: -1;
+    }
+
+    .games-grid {
+        grid-template-columns: repeat(2, 300px);
     }
 }
 
