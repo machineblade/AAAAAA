@@ -3,10 +3,11 @@ const mobileMenu = document.getElementById('mobileMenu');
 const nav = document.getElementById('nav');
 const videosGrid = document.getElementById('videosGrid');
 const gamesGrid = document.getElementById('gamesGrid');
+
+const featuredGameCard = document.getElementById('featuredGameCard');
+const featuredGameThumb = document.getElementById('featuredGameThumb');
 const featuredGameTitle = document.getElementById('featuredGameTitle');
 const featuredGameDesc = document.getElementById('featuredGameDesc');
-const featuredGameThumb = document.getElementById('featuredGameThumb');
-const featuredGameCard = document.getElementById('featuredGameCard');
 
 const videoModalOverlay = document.getElementById('videoModal');
 const videoClose = document.getElementById('videoClose');
@@ -17,6 +18,8 @@ const gameModalOverlay = document.getElementById('gameModal');
 const gameModalBox = document.getElementById('gameModalBox');
 const gameClose = document.getElementById('gameClose');
 const gameFrame = document.getElementById('gameFrame');
+
+let featuredGameUrl = '';
 
 hamburger.addEventListener('click', () => {
     hamburger.classList.toggle('open');
@@ -83,15 +86,12 @@ function captureFirstFrame(videoUrl) {
 function renderFeaturedGame(game) {
     if (!game) return;
 
-    if (featuredGameTitle) featuredGameTitle.textContent = game.title || 'Featured Game';
-    if (featuredGameDesc) featuredGameDesc.textContent = game.description || '';
-    if (featuredGameThumb) {
-        featuredGameThumb.src = `/games/${game.folder}/thumbnail.png`;
-        featuredGameThumb.alt = `${game.title || 'Featured Game'} thumbnail`;
-    }
-    if (featuredGameCard) {
-        featuredGameCard.dataset.url = `/games/${game.folder}/index.html`;
-    }
+    featuredGameUrl = `/games/${game.folder}/index.html`;
+    featuredGameTitle.textContent = game.title || 'Featured Game';
+    featuredGameDesc.textContent = game.description || '';
+    featuredGameThumb.src = `/games/${game.folder}/thumbnail.png`;
+    featuredGameThumb.alt = `${game.title || 'Featured Game'} thumbnail`;
+    featuredGameCard.dataset.url = featuredGameUrl;
 }
 
 async function loadVideos() {
@@ -161,6 +161,7 @@ async function loadGames() {
 
         const data = await res.json();
         const games = Array.isArray(data.games) ? data.games : [];
+
         renderFeaturedGame(data.featured || games[0]);
 
         gamesGrid.innerHTML = games.map(game => `
@@ -177,12 +178,20 @@ async function loadGames() {
 
         gamesGrid.querySelectorAll('.game-card').forEach(card => {
             card.addEventListener('click', () => {
-                const url = card.dataset.url;
-                gameFrame.src = url;
+                gameFrame.src = card.dataset.url;
                 gameModalOverlay.classList.add('open');
                 requestAnimationFrame(() => gameModalBox.classList.add('open'));
             });
         });
+
+        featuredGameCard.addEventListener('click', () => {
+            if (!featuredGameUrl) return;
+            gameFrame.src = featuredGameUrl;
+            gameModalOverlay.classList.add('open');
+            requestAnimationFrame(() => gameModalBox.classList.add('open'));
+        });
+
+        featuredGameCard.style.cursor = 'pointer';
 
         document.querySelectorAll('.game-card.reveal').forEach(el => observer.observe(el));
     } catch (error) {

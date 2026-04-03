@@ -533,6 +533,11 @@ button {
     line-height: 1.7;
 }
 
+
+.hero-featured-thumb:hover {
+    cursor: pointer;
+}
+
 @media (max-width: 900px) {
     .nav-links {
         display: none;
