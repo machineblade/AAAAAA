@@ -2,6 +2,7 @@ const hamburger = document.getElementById('hamburger');
 const mobileMenu = document.getElementById('mobileMenu');
 const nav = document.getElementById('nav');
 const videosGrid = document.getElementById('videosGrid');
+const gamesGrid = document.getElementById('gamesGrid');
 const videoModal = document.getElementById('videoModal');
 const modalClose = document.getElementById('modalClose');
 const modalVideo = document.getElementById('modalVideo');
@@ -129,6 +130,31 @@ async function loadVideos() {
     }
 }
 
+async function loadGames() {
+    try {
+        const res = await fetch('./games.json');
+        if (!res.ok) throw new Error(`games.json fetch failed: ${res.status}`);
+
+        const games = await res.json();
+        const items = Array.isArray(games) ? games : [];
+
+        gamesGrid.innerHTML = items.map(game => `
+      <a class="game-card reveal" href="/games/${game.folder}/index.html">
+        <div class="game-card-info">
+          <h3>${game.title}</h3>
+          <p>${game.description || ''}</p>
+          <div class="btn btn--primary game-card-link">Play</div>
+        </div>
+      </a>
+    `).join('') || '<p style="text-align:center;color:var(--muted);">No games found.</p>';
+
+        document.querySelectorAll('.game-card.reveal').forEach(el => observer.observe(el));
+    } catch (error) {
+        console.error(error);
+        gamesGrid.innerHTML = '<p style="text-align:center;color:var(--muted);">Could not load games.json</p>';
+    }
+}
+
 modalClose.onclick = () => {
     videoModal.classList.remove('open');
     modalVideo.pause();
@@ -145,4 +171,7 @@ videoModal.onclick = (e) => {
     }
 };
 
-window.addEventListener('load', loadVideos);
+window.addEventListener('load', () => {
+    loadVideos();
+    loadGames();
+});
