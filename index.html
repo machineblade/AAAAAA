@@ -23,6 +23,7 @@
                 <a href="#videos">Videos</a>
                 <a href="#games">Games</a>
                 <a href="#about">About</a>
+                <a href="#" id="debugToggle">Debug</a>
             </div>
             <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
         </div>
@@ -31,6 +32,7 @@
             <a href="#videos">Videos</a>
             <a href="#games">Games</a>
             <a href="#about">About</a>
+            <a href="#" id="debugToggleMobile">Debug</a>
         </div>
     </nav>
 
@@ -106,6 +108,16 @@
             <button class="modal-close" id="gameClose">×</button>
             <iframe id="gameFrame" class="game-frame" src="" title="Game" loading="lazy"
                 allow="autoplay; camera; microphone"></iframe>
+        </div>
+    </div>
+
+    <div class="debug-overlay" id="debugOverlay">
+        <div class="debug-panel" id="debugPanel">
+            <div class="debug-header">
+                <span>DEBUG CONSOLE</span>
+                <button class="debug-close" id="debugClose">×</button>
+            </div>
+            <pre class="debug-content" id="debugContent">Loading debug info...</pre>
         </div>
     </div>
 </body>

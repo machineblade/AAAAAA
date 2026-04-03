@@ -19,7 +19,21 @@ const gameModalBox = document.getElementById('gameModalBox');
 const gameClose = document.getElementById('gameClose');
 const gameFrame = document.getElementById('gameFrame');
 
+const debugToggle = document.getElementById('debugToggle');
+const debugToggleMobile = document.getElementById('debugToggleMobile');
+const debugOverlay = document.getElementById('debugOverlay');
+const debugClose = document.getElementById('debugClose');
+const debugContent = document.getElementById('debugContent');
+
 let featuredGameUrl = '';
+let debugOpen = false;
+let debugData = {
+    videosLoaded: 0,
+    gamesLoaded: 0,
+    videoNames: [],
+    gameNames: [],
+    errors: []
+};
 
 hamburger.addEventListener('click', () => {
     hamburger.classList.toggle('open');
@@ -28,6 +42,7 @@ hamburger.addEventListener('click', () => {
 
 window.addEventListener('scroll', () => {
     nav.classList.toggle('scrolled', window.scrollY > 50);
+    if (debugOpen) updateDebugInfo();
 });
 
 const observer = new IntersectionObserver((entries) => {
@@ -93,6 +108,47 @@ function renderFeaturedGame(game) {
     featuredGameCard.dataset.url = featuredGameUrl;
 }
 
+function updateDebugInfo() {
+    const videos = videosGrid ? videosGrid.querySelectorAll('.video-card').length : 0;
+    const games = gamesGrid ? gamesGrid.querySelectorAll('.game-card').length : 0;
+
+    const lines = [
+        `PAGE: ${window.location.href}`,
+        `TIME: ${new Date().toLocaleString()}`,
+        `VIEWPORT: ${window.innerWidth} x ${window.innerHeight}`,
+        `SCROLL Y: ${window.scrollY}`,
+        `VIDEOS LOADED: ${videos}`,
+        `GAMES LOADED: ${games}`,
+        `FEATURED GAME URL: ${featuredGameUrl || 'none'}`,
+        `NAV OPEN: ${mobileMenu.classList.contains('open')}`,
+        `VIDEO MODAL OPEN: ${videoModalOverlay.classList.contains('open')}`,
+        `GAME MODAL OPEN: ${gameModalOverlay.classList.contains('open')}`,
+        `DEBUG OPEN: ${debugOpen}`,
+        '',
+        'DATA:',
+        JSON.stringify(debugData, null, 2)
+    ];
+
+    debugContent.textContent = lines.join('\n');
+}
+
+function openDebug() {
+    debugOpen = true;
+    debugOverlay.classList.add('open');
+    updateDebugInfo();
+}
+
+function closeDebug() {
+    debugOpen = false;
+    debugOverlay.classList.remove('open');
+}
+
+function toggleDebug(e) {
+    if (e) e.preventDefault();
+    if (debugOpen) closeDebug();
+    else openDebug();
+}
+
 async function loadVideos() {
     try {
         const res = await fetch('./videos.json');
@@ -107,35 +163,40 @@ async function loadVideos() {
                 title: titleFromFile(file)
             }));
 
+        debugData.videoNames = items.map(v => v.file);
+
         const html = [];
 
         for (const video of items) {
             let thumb = '';
             try {
                 thumb = await captureFirstFrame(video.src);
-            } catch { }
+            } catch (err) {
+                debugData.errors.push(`thumbnail failed: ${video.src}`);
+            }
 
             html.push(`
-        <div class="video-card reveal" data-src="${video.src}" data-title="${video.title}">
-          <div class="video-card-thumb">
-            ${thumb
+                <div class="video-card reveal" data-src="${video.src}" data-title="${video.title}">
+                    <div class="video-card-thumb">
+                        ${thumb
                     ? `<img class="video-card-img" src="${thumb}" alt="${video.title} thumbnail">`
                     : `<div style="font-size:3rem;padding:2rem;opacity:.2;">🎬</div>`
                 }
-          </div>
-          <div class="video-card-info">
-            <h3>${video.title}</h3>
-            <div class="video-card-meta">
-              <span>${video.file}</span>
-              <span>•</span>
-              <span>from videos/</span>
-            </div>
-          </div>
-        </div>
-      `);
+                    </div>
+                    <div class="video-card-info">
+                        <h3>${video.title}</h3>
+                        <div class="video-card-meta">
+                            <span>${video.file}</span>
+                            <span>•</span>
+                            <span>from videos/</span>
+                        </div>
+                    </div>
+                </div>
+            `);
         }
 
         videosGrid.innerHTML = html.join('') || '<p style="text-align:center;color:var(--muted);">No videos found.</p>';
+        debugData.videosLoaded = items.length;
 
         videosGrid.querySelectorAll('.video-card').forEach(card => {
             card.addEventListener('click', () => {
@@ -143,13 +204,17 @@ async function loadVideos() {
                 modalTitle.textContent = card.dataset.title;
                 videoModalOverlay.classList.add('open');
                 modalVideo.play().catch(() => { });
+                if (debugOpen) updateDebugInfo();
             });
         });
 
         document.querySelectorAll('.video-card.reveal').forEach(el => observer.observe(el));
+        if (debugOpen) updateDebugInfo();
     } catch (error) {
         console.error(error);
+        debugData.errors.push(String(error.message || error));
         videosGrid.innerHTML = '<p style="text-align:center;color:var(--muted);">Could not load videos.json</p>';
+        if (debugOpen) updateDebugInfo();
     }
 }
 
@@ -161,25 +226,30 @@ async function loadGames() {
         const data = await res.json();
         const games = Array.isArray(data.games) ? data.games : [];
 
+        debugData.gameNames = games.map(g => g.title || g.folder || 'Untitled');
+
         renderFeaturedGame(data.featured || games[0]);
 
         gamesGrid.innerHTML = games.map(game => `
-      <div class="game-card reveal" data-url="/games/${game.folder}/index.html">
-        <div class="game-card-thumb">
-          <img class="game-card-img" src="/games/${game.folder}/thumbnail.png" alt="${game.title} thumbnail">
-        </div>
-        <div class="game-card-info">
-          <h3>${game.title}</h3>
-          <p>${game.description || ''}</p>
-        </div>
-      </div>
-    `).join('') || '<p style="text-align:center;color:var(--muted);">No games found.</p>';
+            <div class="game-card reveal" data-url="/games/${game.folder}/index.html">
+                <div class="game-card-thumb">
+                    <img class="game-card-img" src="/games/${game.folder}/thumbnail.png" alt="${game.title} thumbnail">
+                </div>
+                <div class="game-card-info">
+                    <h3>${game.title}</h3>
+                    <p>${game.description || ''}</p>
+                </div>
+            </div>
+        `).join('') || '<p style="text-align:center;color:var(--muted);">No games found.</p>';
+
+        debugData.gamesLoaded = games.length;
 
         gamesGrid.querySelectorAll('.game-card').forEach(card => {
             card.addEventListener('click', () => {
                 gameFrame.src = card.dataset.url;
                 gameModalOverlay.classList.add('open');
                 requestAnimationFrame(() => gameModalBox.classList.add('open'));
+                if (debugOpen) updateDebugInfo();
             });
         });
 
@@ -188,14 +258,18 @@ async function loadGames() {
             gameFrame.src = featuredGameUrl;
             gameModalOverlay.classList.add('open');
             requestAnimationFrame(() => gameModalBox.classList.add('open'));
+            if (debugOpen) updateDebugInfo();
         });
 
         featuredGameCard.style.cursor = 'pointer';
 
         document.querySelectorAll('.game-card.reveal').forEach(el => observer.observe(el));
+        if (debugOpen) updateDebugInfo();
     } catch (error) {
         console.error(error);
+        debugData.errors.push(String(error.message || error));
         gamesGrid.innerHTML = '<p style="text-align:center;color:var(--muted);">Could not load games.json</p>';
+        if (debugOpen) updateDebugInfo();
     }
 }
 
@@ -204,6 +278,7 @@ function closeVideoModal() {
     modalVideo.pause();
     modalVideo.removeAttribute('src');
     modalVideo.load();
+    if (debugOpen) updateDebugInfo();
 }
 
 function closeGameModal() {
@@ -212,6 +287,7 @@ function closeGameModal() {
     setTimeout(() => {
         gameFrame.src = '';
     }, 250);
+    if (debugOpen) updateDebugInfo();
 }
 
 videoClose.addEventListener('click', closeVideoModal);
@@ -225,10 +301,23 @@ gameModalOverlay.addEventListener('click', (e) => {
     if (e.target === gameModalOverlay) closeGameModal();
 });
 
+debugToggle.addEventListener('click', toggleDebug);
+debugToggleMobile.addEventListener('click', toggleDebug);
+debugClose.addEventListener('click', closeDebug);
+
+debugOverlay.addEventListener('click', (e) => {
+    if (e.target === debugOverlay) closeDebug();
+});
+
+window.addEventListener('resize', () => {
+    if (debugOpen) updateDebugInfo();
+});
+
 window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         closeVideoModal();
         closeGameModal();
+        closeDebug();
     }
 });
 

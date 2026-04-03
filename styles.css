@@ -437,7 +437,8 @@ button {
 }
 
 .video-modal-overlay,
-.game-modal-overlay {
+.game-modal-overlay,
+.debug-overlay {
     position: fixed;
     inset: 0;
     z-index: 1200;
@@ -452,13 +453,15 @@ button {
 }
 
 .video-modal-overlay.open,
-.game-modal-overlay.open {
+.game-modal-overlay.open,
+.debug-overlay.open {
     opacity: 1;
     visibility: visible;
 }
 
 .video-modal,
-.game-modal {
+.game-modal,
+.debug-panel {
     position: relative;
     background: #000;
     border: 1px solid var(--border-hover);
@@ -470,7 +473,8 @@ button {
 }
 
 .video-modal-overlay.open .video-modal,
-.game-modal-overlay.open .game-modal {
+.game-modal-overlay.open .game-modal,
+.debug-overlay.open .debug-panel {
     transform: scale(1);
     opacity: 1;
 }
@@ -514,6 +518,54 @@ button {
 .modal-info {
     padding: 1rem 1.25rem 1.25rem;
     background: var(--surface);
+}
+
+.debug-overlay {
+    align-items: flex-start;
+    padding-top: 90px;
+}
+
+.debug-panel {
+    width: min(720px, 92vw);
+    max-height: min(75vh, 700px);
+    background: #050505;
+    color: #22ff55;
+    border: 1px solid rgba(34, 255, 85, 0.35);
+    border-radius: 22px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+    transform: scale(0.7) translateY(-20px);
+}
+
+.debug-overlay.open .debug-panel {
+    transform: scale(1) translateY(0);
+}
+
+.debug-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1rem;
+    background: #0a0a0a;
+    border-bottom: 1px solid rgba(34, 255, 85, 0.18);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.debug-close {
+    color: #22ff55;
+    font-size: 1.6rem;
+    line-height: 1;
+    padding: 0 0.4rem;
+}
+
+.debug-content {
+    margin: 0;
+    padding: 1rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow: auto;
+    max-height: calc(75vh - 60px);
 }
 
 .reveal {
@@ -573,5 +625,9 @@ button {
     .game-modal-overlay.open .game-modal {
         width: 96vw;
         height: 60vh;
+    }
+
+    .debug-overlay {
+        padding-top: 70px;
     }
 }
