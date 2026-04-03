@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arcade Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Bebas+Neue&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="script.js"></script>
+</head>
+
+<body>
+    <nav class="nav" id="nav">
+        <div class="nav-inner">
+            <a href="#home" class="nav-logo">ARCADE<span>HUB</span></a>
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#videos">Videos</a>
+                <a href="#about">About</a>
+            </div>
+            <button class="hamburger" id="hamburger">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+        <div class="nav-mobile" id="mobileMenu">
+            <a href="#home">Home</a>
+            <a href="#videos">Videos</a>
+            <a href="#about">About</a>
+        </div>
+    </nav>
+
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <div class="hero-left reveal">
+                <div class="hero-tag">Live now • New drops weekly</div>
+                <h1>YOUR<br><span class="accent">GAMES.</span><br><span class="accent2">YOUR WORLD.</span></h1>
+                <p class="hero-sub">Discover hand-picked browser videos. No downloads, no sign-up. Just click and watch.
+                </p>
+                <div class="hero-btns">
+                    <a href="#videos" class="btn btn--primary">Watch Videos</a>
+                </div>
+            </div>
+            <div class="hero-right reveal">
+                <div class="hero-featured">
+                    <div class="hero-featured-thumb">
+                        <span class="featured-badge">Featured</span>
+                        <div style="font-size:3rem;color:#666;">🎮</div>
+                    </div>
+                    <div class="hero-featured-info">
+                        <div>
+                            <h3>Shadow Strike</h3>
+                            <p>Action • Multiplayer • 2 Players</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section section--alt" id="videos">
+        <div class="container">
+            <div class="section-header reveal">
+                <h2>Watch <span>Videos</span></h2>
+            </div>
+            <div class="videos-grid" id="videosGrid"></div>
+        </div>
+    </section>
+
+    <section class="section" id="about">
+        <div class="container">
+            <div class="section-header reveal">
+                <h2>About <span>Arcade Hub</span></h2>
+            </div>
+            <p class="reveal about-text">Arcade Hub is your one-stop platform for browser videos.</p>
+        </div>
+    </section>
+
+    <div class="modal-overlay" id="videoModal">
+        <div class="modal">
+            <button class="modal-close" id="modalClose">×</button>
+            <div class="modal-video-area">
+                <video id="modalVideo" class="modal-video" controls></video>
+            </div>
+            <div class="video-card-info modal-info">
+                <h3 id="modalTitle">Video Player</h3>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>*
