@@ -64,17 +64,19 @@ function titleFromFile(file) {
 function captureFirstFrame(videoUrl) {
     return new Promise((resolve, reject) => {
         const video = document.createElement('video');
-        video.preload = 'auto';
+        video.crossOrigin = 'anonymous';
+        video.preload = 'metadata';
         video.muted = true;
         video.playsInline = true;
         video.src = videoUrl;
+        video.currentTime = 0.5;
 
         const cleanup = () => {
             video.removeAttribute('src');
             video.load();
         };
 
-        video.addEventListener('loadeddata', () => {
+        video.addEventListener('seeked', () => {
             try {
                 const canvas = document.createElement('canvas');
                 canvas.width = video.videoWidth || 640;
@@ -203,10 +205,7 @@ async function loadVideos() {
                 modalVideo.src = card.dataset.src;
                 modalTitle.textContent = card.dataset.title;
                 videoModalOverlay.classList.add('open');
-                modalVideo.load();
-                modalVideo.addEventListener('canplay', () => {
-                    modalVideo.play().catch(() => { });
-                }, { once: true });
+                modalVideo.play().catch(() => { });
                 if (debugOpen) updateDebugInfo();
             });
         });
