@@ -5,7 +5,6 @@ const videosGrid = document.getElementById('videosGrid');
 const gamesGrid = document.getElementById('gamesGrid');
 
 const videoModalOverlay = document.getElementById('videoModal');
-const videoModal = videoModalOverlay.querySelector('.video-modal');
 const videoClose = document.getElementById('videoClose');
 const modalVideo = document.getElementById('modalVideo');
 const modalTitle = document.getElementById('modalTitle');
@@ -126,7 +125,6 @@ async function loadVideos() {
                 modalVideo.src = card.dataset.src;
                 modalTitle.textContent = card.dataset.title;
                 videoModalOverlay.classList.add('open');
-                requestAnimationFrame(() => videoModalOverlay.classList.add('open'));
                 modalVideo.play().catch(() => { });
             });
         });
@@ -155,8 +153,7 @@ async function loadGames() {
             }
         </div>
         <div class="game-card-info">
-          <h3>${game.title}</h3>
-          <p>${game.description || ''}</p>
+          <h3>${game.title} <span style="color:var(--accent);">•</span> ${game.description || ''}</h3>
         </div>
       </div>
     `).join('') || '<p style="text-align:center;color:var(--muted);">No games found.</p>';
