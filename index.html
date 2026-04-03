@@ -8,118 +8,121 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Bebas+Neue&display=swap"
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <script type="module" src="script.js"></script>
 </head>
 
 <body>
-    <nav class="nav" id="nav">
-        <div class="nav-inner">
-            <a href="#home" class="nav-logo">ALTRUISM<span>HUB</span></a>
-            <div class="nav-links">
-                <a href="#home">Home</a>
-                <a href="#videos">Videos</a>
-                <a href="#games">Games</a>
-                <a href="#about">About</a>
-                <a href="#" id="debugToggle">Debug</a>
-            </div>
-            <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+
+    <!-- NAV -->
+    <nav id="nav">
+        <a href="#home" class="nav-logo">ALTRUISM<em>HUB</em></a>
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#videos">Videos</a>
+            <a href="#games">Games</a>
+            <a href="#about">About</a>
+            <a href="#" id="debugToggle" class="nav-debug">Debug</a>
         </div>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
         <div class="nav-mobile" id="mobileMenu">
             <a href="#home">Home</a>
             <a href="#videos">Videos</a>
             <a href="#games">Games</a>
             <a href="#about">About</a>
-            <a href="#" id="debugToggleMobile">Debug</a>
+            <a href="#" id="debugToggleMobile" class="nav-debug">Debug</a>
         </div>
     </nav>
 
-    <section class="hero" id="home">
-        <div class="hero-content">
-            <div class="hero-left reveal">
-                <div class="hero-tag">Live now • New drops weekly</div>
-                <h1>GOOD <br><span class="accent">GAMES.</span><br><span class="accent2">FUN. GAMES.</span></h1>
-                <p class="hero-sub">Discover beautiful games here</p>
+    <!-- HERO -->
+    <section id="home" class="hero">
+        <div class="hero-grid">
+            <div class="hero-left">
+                <span class="hero-tag">&#9679; Live now &mdash; New drops weekly</span>
+                <h1>GOOD<br><span class="t-accent">GAMES.</span><br><span class="t-pink">FUN. GAMES.</span></h1>
+                <p class="hero-sub">Discover beautiful games &amp; videos, all in one place.</p>
                 <div class="hero-btns">
-                    <a href="#videos" class="btn btn--primary">Watch Videos</a>
-                    <a href="#games" class="btn btn--outline">Play Games</a>
+                    <a href="#videos" class="btn btn-primary">Watch Videos</a>
+                    <a href="#games" class="btn btn-ghost">Play Games</a>
                 </div>
             </div>
-            <div class="hero-right reveal">
-                <div class="hero-featured">
-                    <div class="hero-featured-thumb" id="featuredGameCard">
-                        <span class="featured-badge">Featured</span>
-                        <img id="featuredGameThumb" src="" alt="Featured game thumbnail">
+            <div class="hero-right">
+                <div class="featured-card" id="featuredCard">
+                    <div class="featured-thumb">
+                        <span class="badge">Featured</span>
+                        <img id="featuredThumb" src="" alt="Featured game" />
                     </div>
-                    <div class="hero-featured-info">
-                        <div>
-                            <h3 id="featuredGameTitle">Featured Game</h3>
-                            <p id="featuredGameDesc">Description</p>
-                        </div>
+                    <div class="featured-info">
+                        <h3 id="featuredTitle">—</h3>
+                        <p id="featuredDesc"></p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="section section--alt" id="videos">
+    <!-- VIDEOS -->
+    <section id="videos" class="section section-alt">
         <div class="container">
-            <div class="section-header reveal">
-                <h2>Watch <span>Videos</span></h2>
+            <h2 class="section-title">Watch <em>Videos</em></h2>
+            <div class="videos-grid" id="videosGrid">
+                <p class="empty-msg">Loading videos…</p>
             </div>
-            <div class="videos-grid" id="videosGrid"></div>
         </div>
     </section>
 
-    <section class="section" id="games">
+    <!-- GAMES -->
+    <section id="games" class="section">
         <div class="container">
-            <div class="section-header reveal">
-                <h2>Play <span>Games</span></h2>
+            <h2 class="section-title">Play <em>Games</em></h2>
+            <div class="games-grid" id="gamesGrid">
+                <p class="empty-msg">Loading games…</p>
             </div>
-            <div class="games-grid" id="gamesGrid"></div>
         </div>
     </section>
 
-    <section class="section" id="about">
+    <!-- ABOUT -->
+    <section id="about" class="section section-alt">
         <div class="container">
-            <div class="section-header reveal">
-                <h2>About <span>Altruism Hub</span></h2>
-            </div>
-            <p class="reveal about-text">Altruism Hub is a video (game) website for relaxing.</p>
+            <h2 class="section-title">About <em>Altruism Hub</em></h2>
+            <p class="about-text">Altruism Hub is a video &amp; game website for relaxing.</p>
         </div>
     </section>
 
-    <div class="video-modal-overlay" id="videoModal">
-        <div class="video-modal">
-            <button class="modal-close" id="videoClose">×</button>
-            <div class="modal-video-area">
-                <video id="modalVideo" class="modal-video" controls></video>
-            </div>
-            <div class="modal-info">
-                <h3 id="modalTitle">Video Player</h3>
+    <!-- VIDEO MODAL -->
+    <div class="modal-overlay" id="videoModal" role="dialog" aria-modal="true" aria-label="Video player">
+        <div class="modal video-modal-box">
+            <button class="modal-close" id="videoClose" aria-label="Close">&#x2715;</button>
+            <video id="modalVideo" controls playsinline></video>
+            <div class="modal-footer">
+                <span id="modalTitle"></span>
             </div>
         </div>
     </div>
 
-    <div class="game-modal-overlay" id="gameModal">
-        <div class="game-modal" id="gameModalBox">
-            <button class="modal-close" id="gameClose">×</button>
-            <iframe id="gameFrame" class="game-frame" src="" title="Game" loading="lazy"
-                allow="autoplay; camera; microphone"></iframe>
+    <!-- GAME MODAL -->
+    <div class="modal-overlay" id="gameModal" role="dialog" aria-modal="true" aria-label="Game player">
+        <div class="modal game-modal-box" id="gameModalBox">
+            <button class="modal-close" id="gameClose" aria-label="Close">&#x2715;</button>
+            <iframe id="gameFrame" title="Game" loading="lazy" allow="autoplay; camera; microphone"></iframe>
         </div>
     </div>
 
-    <div class="debug-overlay" id="debugOverlay">
-        <div class="debug-panel" id="debugPanel">
+    <!-- DEBUG PANEL -->
+    <div class="modal-overlay debug-overlay" id="debugOverlay">
+        <div class="debug-panel">
             <div class="debug-header">
                 <span>DEBUG CONSOLE</span>
-                <button class="debug-close" id="debugClose">×</button>
+                <button id="debugClose" aria-label="Close debug">&#x2715;</button>
             </div>
-            <pre class="debug-content" id="debugContent">Loading debug info...</pre>
+            <pre id="debugContent"></pre>
         </div>
     </div>
+
+    <script src="script.js" type="module"></script>
 </body>
 
 </html>
