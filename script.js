@@ -46,8 +46,41 @@ function titleFromFile(file) {
         .replace(/[-_]/g, ' ');
 }
 
-function youtubeEmbedUrl(id) {
-    return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
+function captureFirstFrame(videoUrl) {
+    return new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        video.preload = 'auto';
+        video.muted = true;
+        video.playsInline = true;
+        video.crossOrigin = 'anonymous';
+        video.src = videoUrl;
+
+        const cleanup = () => {
+            video.removeAttribute('src');
+            video.load();
+        };
+
+        video.addEventListener('loadeddata', () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 360;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const thumb = canvas.toDataURL('image/jpeg', 0.85);
+                cleanup();
+                resolve(thumb);
+            } catch (err) {
+                cleanup();
+                reject(err);
+            }
+        }, { once: true });
+
+        video.addEventListener('error', () => {
+            cleanup();
+            reject(new Error(`Failed to load ${videoUrl}`));
+        }, { once: true });
+    });
 }
 
 function renderFeaturedGame(game) {
@@ -66,40 +99,51 @@ async function loadVideos() {
         const res = await fetch('./videos.json');
         if (!res.ok) throw new Error(`videos.json fetch failed: ${res.status}`);
 
-        const items = await res.json();
-        const videos = Array.isArray(items) ? items : [];
+        const files = await res.json();
+        const items = (Array.isArray(files) ? files : [])
+            .filter(file => typeof file === 'string' && file.trim())
+            .map(file => ({
+                file: file.trim(),
+                src: `videos/${file.trim()}`,
+                title: titleFromFile(file)
+            }));
 
-        const html = videos.map(video => {
-            const file = typeof video.file === 'string' ? video.file.trim() : 'video.mp4';
-            const id = typeof video.id === 'string' ? video.id.trim() : '';
-            const title = titleFromFile(file);
-            return `
-                <div class="video-card reveal" data-video-id="${id}" data-title="${title}">
-                    <div class="video-card-thumb">
-                        <div style="font-size:3rem;padding:2rem;opacity:.2;">▶</div>
-                    </div>
-                    <div class="video-card-info">
-                        <h3>${title}</h3>
-                        <div class="video-card-meta">
-                            <span>${file}</span>
-                            <span>•</span>
-                            <span>YouTube Unlisted</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
+        const html = [];
 
-        videosGrid.innerHTML = html || '<p style="text-align:center;color:var(--muted);">No videos found.</p>';
+        for (const video of items) {
+            let thumb = '';
+            try {
+                thumb = await captureFirstFrame(video.src);
+            } catch { }
+
+            html.push(`
+        <div class="video-card reveal" data-src="${video.src}" data-title="${video.title}">
+          <div class="video-card-thumb">
+            ${thumb
+                    ? `<img class="video-card-img" src="${thumb}" alt="${video.title} thumbnail">`
+                    : `<div style="font-size:3rem;padding:2rem;opacity:.2;">🎬</div>`
+                }
+          </div>
+          <div class="video-card-info">
+            <h3>${video.title}</h3>
+            <div class="video-card-meta">
+              <span>${video.file}</span>
+              <span>•</span>
+              <span>from videos/</span>
+            </div>
+          </div>
+        </div>
+      `);
+        }
+
+        videosGrid.innerHTML = html.join('') || '<p style="text-align:center;color:var(--muted);">No videos found.</p>';
 
         videosGrid.querySelectorAll('.video-card').forEach(card => {
             card.addEventListener('click', () => {
-                const id = card.dataset.videoId;
-                if (!id) return;
-
-                modalVideo.src = youtubeEmbedUrl(id);
+                modalVideo.src = card.dataset.src;
                 modalTitle.textContent = card.dataset.title;
                 videoModalOverlay.classList.add('open');
+                modalVideo.play().catch(() => { });
             });
         });
 
@@ -121,16 +165,16 @@ async function loadGames() {
         renderFeaturedGame(data.featured || games[0]);
 
         gamesGrid.innerHTML = games.map(game => `
-            <div class="game-card reveal" data-url="/games/${game.folder}/index.html">
-                <div class="game-card-thumb">
-                    <img class="game-card-img" src="/games/${game.folder}/thumbnail.png" alt="${game.title} thumbnail">
-                </div>
-                <div class="game-card-info">
-                    <h3>${game.title}</h3>
-                    <p>${game.description || ''}</p>
-                </div>
-            </div>
-        `).join('') || '<p style="text-align:center;color:var(--muted);">No games found.</p>';
+      <div class="game-card reveal" data-url="/games/${game.folder}/index.html">
+        <div class="game-card-thumb">
+          <img class="game-card-img" src="/games/${game.folder}/thumbnail.png" alt="${game.title} thumbnail">
+        </div>
+        <div class="game-card-info">
+          <h3>${game.title}</h3>
+          <p>${game.description || ''}</p>
+        </div>
+      </div>
+    `).join('') || '<p style="text-align:center;color:var(--muted);">No games found.</p>';
 
         gamesGrid.querySelectorAll('.game-card').forEach(card => {
             card.addEventListener('click', () => {
@@ -158,7 +202,9 @@ async function loadGames() {
 
 function closeVideoModal() {
     videoModalOverlay.classList.remove('open');
+    modalVideo.pause();
     modalVideo.removeAttribute('src');
+    modalVideo.load();
 }
 
 function closeGameModal() {
