@@ -128,8 +128,6 @@ async function loadVideos() {
             <h3>${video.title}</h3>
             <div class="video-card-meta">
               <span>${video.file}</span>
-              <span>•</span>
-              <span>from videos/</span>
             </div>
           </div>
         </div>
