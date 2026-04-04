@@ -27,6 +27,11 @@
         #hud {
             display: none;
         }
+
+        @font-face {
+            font-family: 'Pusab';
+            src: url('./assets/resources/fonts/pusab.otf') format('opentype');
+        }
     </style>
 </head>
 
@@ -68,9 +73,14 @@
 
         const director = new Director(app);
 
-        // ── Phase 1: load assets for loading screen (including bar assets) ──
-        // We can't show the pixi bar yet — just load silently first
-        await PIXI.Assets.load(ASSETS_LOADING);
+        // ── Phase 1: load assets + splash text in parallel ──
+        const [, splashText] = await Promise.all([
+            PIXI.Assets.load(ASSETS_LOADING),
+            fetch('./assets/resources/gameSplashes.txt').then(r => r.text()),
+        ]);
+
+        const splashes = splashText.split('\n').map(l => l.trim()).filter(Boolean);
+        const splash = splashes[Math.floor(Math.random() * splashes.length)];
 
         // ── Show loading screen with pixi progress bar ──
         const loadingScreen = new LoadingScreen();
@@ -80,6 +90,7 @@
             name: PIXI.Assets.get('name'),
             sliderGroove: PIXI.Assets.get('sliderGroove'),
             sliderBar: PIXI.Assets.get('sliderBar'),
+            splash,
         });
         app.stage.addChild(loadingScreen);
 
@@ -88,12 +99,12 @@
         }
         layoutLoading();
 
-        // ── Phase 2: load remaining assets, update pixi bar ──
-        await PIXI.Assets.load(ASSETS_MAIN, (p) => {
-            loadingScreen.setProgress(p);
-        });
-
-        loadingScreen.setProgress(1.0);
+        // ── Phase 2: load each asset individually, bar steps 1/n per asset ──
+        const total = ASSETS_MAIN.length;
+        for (let i = 0; i < total; i++) {
+            await PIXI.Assets.load(ASSETS_MAIN[i]);
+            loadingScreen.setProgress((i + 1) / total);
+        }
 
         // ── 1 second pause so player sees 100% ──
         await new Promise(r => setTimeout(r, 1000));
