@@ -1,5 +1,8 @@
 import { bounceOut } from './easings.js';
 
+// Shared across all Button instances — true while any pointer is held down
+let anyButtonHeld = false;
+
 export class Button extends PIXI.Container {
 
     /**
@@ -34,18 +37,25 @@ export class Button extends PIXI.Container {
         this.on('pointerupoutside', this._onUpOut, this);
         this.on('pointerover', this._onOver, this);
         this.on('pointerout', this._onOut, this);
+
+        // Clear global held state if pointer released anywhere outside all buttons
+        window.addEventListener('pointerup', () => {
+            if (!this._held) anyButtonHeld = false;
+        }, { passive: true });
     }
 
     // ── Input handlers ──
 
     _onDown() {
         this._held = true;
+        anyButtonHeld = true;
         this._animateTo(this._baseScale * 1.26, 0.3);
     }
 
     _onUp() {
         if (this._held) {
             this._held = false;
+            anyButtonHeld = false;
             this._stopAnim();
             if (typeof this._redirect === 'string') {
                 window.open(this._redirect, '_blank');
@@ -56,16 +66,26 @@ export class Button extends PIXI.Container {
     }
 
     _onUpOut() {
-        this._held = false;
+        if (this._held) {
+            this._held = false;
+            anyButtonHeld = false;
+        }
         this._animateTo(this._baseScale, 0.4);
     }
 
     _onOver() {
-        if (this._held) this._animateTo(this._baseScale * 1.26, 0.3);
+        // Trigger bounce if dragging in from any button
+        if (anyButtonHeld) {
+            this._held = true;
+            this._animateTo(this._baseScale * 1.26, 0.3);
+        }
     }
 
     _onOut() {
-        if (this._held) this._animateTo(this._baseScale, 0.4);
+        if (this._held) {
+            this._held = false;
+            this._animateTo(this._baseScale, 0.4);
+        }
     }
 
     // ── Animation helpers ──

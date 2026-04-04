@@ -1,3 +1,31 @@
+// ╔══════════════════════════════════════════════════════════════╗
+// ║                    ✏️  TWEAK ZONE                            ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+// ── Logos ──────────────────────────────────────────────────────
+const CREATOR_W = 105;        // creator logo width in px
+const CREATOR_TOP = 40;         // distance from top of screen
+const NAME_W = 300;        // game name logo width in px
+const NAME_GAP = 20;         // gap between creator and name logos
+
+// ── Loading bar ────────────────────────────────────────────────
+const BAR_W_FRACTION = 0.6;        // bar width as fraction of screen width
+const BAR_Y_FRACTION = 0.6;        // bar vertical position as fraction of screen height
+const BAR_SCALE = 1.0;        // multiplier on groove's natural height
+const FILL_H_FRACTION = 0.5;        // fill height as fraction of scaled bar height
+
+// ── Splash text ────────────────────────────────────────────────
+const SPLASH_GAP = 10;         // gap between bar bottom and splash text
+const SPLASH_FONT_SIZE = 15;         // font size in design-space px
+const SPLASH_RESOLUTION = 6;          // render resolution multiplier (higher = crisper)
+const SPLASH_STROKE_WIDTH = 8;          // outline stroke width (at render resolution)
+const SPLASH_STROKE_COLOR = '#000000';  // outline colour
+const SPLASH_GRAD_TOP = '#FCB227';  // gradient colour at top of each letter
+const SPLASH_GRAD_BOTTOM = '#FFD844';  // gradient colour at bottom of each letter
+
+// ══════════════════════════════════════════════════════════════
+
+
 export class LoadingScreen extends PIXI.Container {
 
     /**
@@ -25,53 +53,71 @@ export class LoadingScreen extends PIXI.Container {
         // ── Loading bar ──
         this._buildBar(textures);
 
-        // ── Splash text ──
-        const SPLASHES = [
-            "Only one?", "Listen to the music to help time your jumps", "Back for more are ya?",
-            "Use practice mode to learn the layout of a level", "If at first you don't succeed, try, try again...",
-            "Customize your character's icon and color!", "You can download all songs from the level select page!",
-            "Spikes are not your friends. don't forget to jump", "Build your own levels using the level editor",
-            "Go online to play other players levels!", "Can you beat them all?", "Here be dragons...",
-            "Pro tip: Don't crash", "Hold down to keep jumping", "The spikes whisper to me...",
-            "Looking for pixels", "Loading awesome soundtracks...", "What if the spikes are the good guys?",
-            "Pro tip: Jump", "Does anyone even read this?", "Collecting scrap metal",
-            "Waiting for planets to align", "Starting the flux capacitor", "Wandering around aimlessly",
-            "Where did I put that coin...", "Loading the progressbar", "Calculating chance of success",
-            "Hiding secrets", "Drawing pretty pictures", "Programmer is sleeping, please wait",
-            "RobTop is Love, RobTop is Life", "Play, Crash, Rage, Quit, Repeat",
-            "Only one button required to crash", "Such wow, very amaze.", "Fus Ro DASH!",
-            "Loading Rage Cannon", "Counting to 1337", "It's all in the timing", "Fake spikes are fake",
-            "Spikes... OF DOOM!", "Why don't you go outside?", "Loading will be finished... soon",
-            "This seems like a good place to hide a secret...", "The vault Keeper's name is 'Spooky'...",
-            "Hop the big guy doesn't wake up...", "Shhhh! You're gonna wake the big one!",
-            "I have been expecting you.", "A wild RubRub appeared!", "So many secrets...",
-            "Hiding rocket launcher", "It's Over 9000!", "Programming amazing AI", "Hiding secret vault",
-            "Spooky doesn't get out much", "RubRub was here", "Warp Speed", "So, what's up?",
-            "Hold on, reading the manual", "I don't know how this works...", "Why u have to be mad?",
-            "It is only game...", "Unlock new icons and colors by completing achievements",
-        ];
-        const splash = SPLASHES[Math.floor(Math.random() * SPLASHES.length)];
+        // ── Splash text: loaded from file, rendered with per-letter gradient + stroke ──
+        this.splashText = null; // built async in _loadSplash()
+        this._loadSplash();
+    }
 
-        const FONT_SIZE = 11;
-        const RESOLUTION = 4; // render at 4x then scale down — keeps it crisp
-        this.splashText = new PIXI.Text({
-            text: splash,
-            style: {
-                fontFamily: 'Pusab',
-                fontSize: FONT_SIZE * RESOLUTION,
-                fill: 0xffffff,
-                align: 'center',
-                dropShadow: {
-                    color: 0x000000,
-                    blur: 0,
-                    distance: RESOLUTION,
-                    angle: Math.PI / 4,
-                },
-            },
-        });
-        this.splashText.scale.set(1 / RESOLUTION);
+    async _loadSplash() {
+        const res = await fetch('./assets/resources/gameSplashes.txt');
+        const text = await res.text();
+        const splashes = text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+        const splash = splashes[Math.floor(Math.random() * splashes.length)];
+
+        this.splashText = this._buildSplashSprite(splash);
         this.splashText.anchor.set(0.5, 0);
         this.addChild(this.splashText);
+
+        // Position it if layout() already ran
+        if (this._lastLayout) {
+            const { dw, dh, barY } = this._lastLayout;
+            this.splashText.position.set(dw / 2, barY + this.barH / 2 + SPLASH_GAP);
+        }
+    }
+
+    _buildSplashSprite(text) {
+        const fs = SPLASH_FONT_SIZE * SPLASH_RESOLUTION;
+
+        // ── Measure on a temp canvas ──
+        const tmp = document.createElement('canvas').getContext('2d');
+        tmp.font = `${fs}px Pusab, sans-serif`;
+        const textW = Math.ceil(tmp.measureText(text).width);
+        const textH = fs * 1.3;
+
+        // ── Render canvas ──
+        const pad = SPLASH_STROKE_WIDTH + 2;
+        const canvas = document.createElement('canvas');
+        canvas.width = textW + pad * 2;
+        canvas.height = Math.ceil(textH) + pad * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.font = `${fs}px Pusab, sans-serif`;
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+
+        let curX = pad;
+        for (const char of text) {
+            const charW = ctx.measureText(char).width;
+
+            // Per-letter vertical gradient
+            const grad = ctx.createLinearGradient(curX, pad, curX, pad + textH);
+            grad.addColorStop(0, SPLASH_GRAD_TOP);
+            grad.addColorStop(1, SPLASH_GRAD_BOTTOM);
+
+            // Stroke first, then fill on top
+            ctx.strokeStyle = SPLASH_STROKE_COLOR;
+            ctx.lineWidth = SPLASH_STROKE_WIDTH;
+            ctx.lineJoin = 'round';
+            ctx.strokeText(char, curX, pad);
+
+            ctx.fillStyle = grad;
+            ctx.fillText(char, curX, pad);
+
+            curX += charW;
+        }
+
+        const sprite = new PIXI.Sprite(PIXI.Texture.from(canvas));
+        sprite.scale.set(1 / SPLASH_RESOLUTION);
+        return sprite;
     }
 
     _buildBar(textures) {
@@ -100,18 +146,6 @@ export class LoadingScreen extends PIXI.Container {
     }
 
     layout(dw, dh) {
-        // ── ✏️ TWEAK THESE VALUES ──────────────────────────────────────────
-        const CREATOR_W = 105;    // creator logo width in px
-        const CREATOR_TOP = 40;     // distance from top of screen
-        const NAME_W = 300;    // game name logo width in px
-        const NAME_GAP = 20;     // gap between creator and name logos
-        const BAR_W_FRACTION = 0.6;    // bar width as fraction of screen width
-        const BAR_Y_FRACTION = 0.82;   // bar vertical position as fraction of screen height
-        const BAR_SCALE = 1.0;    // multiplier on the groove's natural height (makes bar taller)
-        const FILL_H_FRACTION = 0.5;    // fill height as fraction of scaled bar height
-        const SPLASH_GAP = 10;     // gap between bar bottom and splash text
-        // ─────────────────────────────────────────────────────────────────
-
         // ── Background: cover-fit ──
         const tex = this.textures.background;
         const scale = Math.max(dw / tex.width, dh / tex.height);
@@ -132,13 +166,11 @@ export class LoadingScreen extends PIXI.Container {
         const barY = dh * BAR_Y_FRACTION;
         this.barContainer.position.set(dw / 2, barY);
 
-        // Scale groove to fill barW, then apply BAR_SCALE to make it taller
         const grooveTex = this.textures.sliderGroove;
         const grooveScale = (this.barW / grooveTex.width) * BAR_SCALE;
         this.groove.scale.set(grooveScale);
         this.barH = grooveTex.height * grooveScale;
 
-        // Fill height is a fraction of the scaled bar height
         const FILL_H = this.barH * FILL_H_FRACTION;
         this.barFill.x = -this.barW / 2;
         this.barFill.y = 0;
@@ -148,8 +180,13 @@ export class LoadingScreen extends PIXI.Container {
 
         this._drawMask(this._progress);
 
+        // Cache for async splash positioning
+        this._lastLayout = { dw, dh, barY };
+
         // ── Splash text ──
-        this.splashText.position.set(dw / 2, barY + this.barH / 2 + SPLASH_GAP);
+        if (this.splashText) {
+            this.splashText.position.set(dw / 2, barY + this.barH / 2 + SPLASH_GAP);
+        }
     }
 
     setProgress(p) {
@@ -161,7 +198,7 @@ export class LoadingScreen extends PIXI.Container {
     _drawMask(p) {
         if (!this.barMask || this.barW === 0) return;
 
-        const FILL_H = this.barH * 0.5; // keep in sync with FILL_H_FRACTION above
+        const FILL_H = this.barH * FILL_H_FRACTION;
         const w = this.barW * p;
         const r = FILL_H / 2;
         const x = -this.barW / 2;

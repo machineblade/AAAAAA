@@ -1,5 +1,4 @@
 Only one?
-
 Listen to the music to help time your jumps
 Back for more are ya?
 Use practice mode to learn the layout of a level
@@ -29,7 +28,7 @@ Calculating chance of success
 Hiding secrets
 Drawing pretty pictures
 Programmer is sleeping, please wait
-RobTop is Love, RobTop is Life
+Machine_Blade is Love, Machine_Blade is Life
 Play, Crash, Rage, Quit, Repeat
 Only one button required to crash
 Such wow, very amaze.

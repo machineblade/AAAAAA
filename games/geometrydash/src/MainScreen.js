@@ -14,7 +14,7 @@ export class MainScene extends PIXI.Container {
         this.addChild(this.gameName);
 
         // ── Creator logo — bottom left, links to site ──
-        this.creator = new Button('creator', 20, 'https://altruism1.vercel.app');
+        this.creator = new Button('creator', 13, 'https://altruism1.vercel.app');
         this.addChild(this.creator);
 
         // ── Play button — centred ──
@@ -23,6 +23,19 @@ export class MainScene extends PIXI.Container {
             // TODO: transition to game scene
         });
         this.addChild(this.playButton);
+
+        // ── Garage + Edit buttons — flanking the play button ──
+        this.garageButton = new Button('garageButton', 60, () => {
+            console.log('Garage pressed!');
+            // TODO: open garage/character select
+        });
+        this.addChild(this.garageButton);
+
+        this.editButton = new Button('editButton', 60, () => {
+            console.log('Edit pressed!');
+            // TODO: open level editor
+        });
+        this.addChild(this.editButton);
 
         // ── Menu music — autoplay is safe, user already clicked ──
         this._music = new Audio('./assets/songs/menuLoop.mp3');
@@ -44,16 +57,23 @@ export class MainScene extends PIXI.Container {
         this.gameName.position.set(dw / 2, 12);
 
         // Creator: bottom-left, offset by half its size so centre-anchor sits in corner
-        const creatorHalf = (20 / PIXI.Assets.get('creator').height) * PIXI.Assets.get('creator').width / 2;
-        this.creator.position.set(10 + creatorHalf, dh - 10 - 10);
+        const creatorHalf = (12 / PIXI.Assets.get('creator').height) * PIXI.Assets.get('creator').width / 2;
+        this.creator.position.set(10 + creatorHalf, dh - 10 - 1);
 
         // Play button: centred
         this.playButton.position.set(dw / 2, dh / 2);
+
+        // Garage (left) and Edit (right) flanking the play button
+        const SIDE_SPACING = 80; // horizontal gap from play button centre to side button centre
+        this.garageButton.position.set(dw / 2 - SIDE_SPACING, dh / 2);
+        this.editButton.position.set(dw / 2 + SIDE_SPACING, dh / 2);
     }
 
     tick(dt) {
         this.background.tick(dt);
         this.creator.tick(dt);
         this.playButton.tick(dt);
+        this.garageButton.tick(dt);
+        this.editButton.tick(dt);
     }
 }
