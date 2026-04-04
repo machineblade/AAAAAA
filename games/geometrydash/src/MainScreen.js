@@ -16,6 +16,10 @@ export class MainScene extends PIXI.Container {
         // ── Creator logo — bottom left ──
         this.creator = new PIXI.Sprite(PIXI.Assets.get('creator'));
         this.creator.anchor.set(0, 1);
+        this.creator.eventMode = 'static';
+        this.creator.on('pointerup', () => {
+            window.open('https://altruism1.vercel.app', '_blank');
+        });
         this.addChild(this.creator);
 
         // ── Play button centred on screen ──
@@ -34,8 +38,8 @@ export class MainScene extends PIXI.Container {
         this.gameName.scale.set(300 / this.gameName.texture.width);
         this.gameName.position.set(dw / 2, 12);
 
-        // Creator logo: 80 design points tall, 10px from bottom-left corner
-        this.creator.scale.set(80 / this.creator.texture.height);
+        // Creator logo: 30 design points tall, 10px from bottom-left corner
+        this.creator.scale.set(30 / this.creator.texture.height);
         this.creator.position.set(10, dh - 10);
 
         this.playButton.position.set(dw / 2, dh / 2);
