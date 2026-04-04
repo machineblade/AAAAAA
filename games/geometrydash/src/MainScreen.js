@@ -39,7 +39,7 @@ export class MainScene extends PIXI.Container {
         this.gameName.position.set(dw / 2, 12);
 
         // Creator logo: 30 design points tall, 10px from bottom-left corner
-        this.creator.scale.set(30 / this.creator.texture.height);
+        this.creator.scale.set(20 / this.creator.texture.height);
         this.creator.position.set(10, dh - 10);
 
         this.playButton.position.set(dw / 2, dh / 2);
