@@ -1,14 +1,14 @@
 {
     "featured": {
-        "title": "Temu-Dash",
-        "folder": "temudash",
-        "description": "geometry dash from temu"
+        "title": "Geometry Dash",
+        "folder": "geometrydash",
+        "description": "tryna recreate geometry dash"
     },
     "games": [
         {
-            "title": "Temu-Dash",
-            "folder": "temudash",
-            "description": "geometry dash from temu"
+            "title": "Geometry Dash",
+            "folder": "geometrydash",
+            "description": "tryna recreate geometry dash"
         }
     ]
 }
