@@ -125,27 +125,27 @@
         // ── Asset manifest ──
         // These are all loaded via PIXI.Assets so .get() works everywhere
         const ASSETS_LOADING = [
-            { alias: 'creator', src: './assets/creator.png' },
-            { alias: 'name', src: './assets/name.png' },
+            { alias: 'creator',    src: './assets/creator.png' },
+            { alias: 'name',       src: './assets/name.png' },
             { alias: 'background', src: './assets/background.png' },
         ];
 
         const ASSETS_MAIN = [
-            { alias: 'ground', src: './assets/ground.png' },
-            { alias: 'groundline', src: './assets/groundline.png' },
+            { alias: 'ground',       src: './assets/ground.png' },
+            { alias: 'groundline',   src: './assets/groundline.png' },
             { alias: 'groundshadow', src: './assets/groundshadow.png' },
-            { alias: 'playbutton', src: './assets/playbutton.png' },
+            { alias: 'playbutton',   src: './assets/playbutton.png' },
         ];
 
         // ── Progress bar helpers ──
         const barFill = document.getElementById('barFill');
-        const barPct = document.getElementById('barPct');
-        const hud = document.getElementById('hud');
+        const barPct  = document.getElementById('barPct');
+        const hud     = document.getElementById('hud');
 
         function setProgress(p) {
             p = Math.min(1, Math.max(0, p));
-            barFill.style.width = (p * 100) + '%';
-            barPct.textContent = Math.round(p * 100) + '%';
+            barFill.style.width  = (p * 100) + '%';
+            barPct.textContent   = Math.round(p * 100) + '%';
         }
 
         // ── Init PixiJS ──
@@ -174,8 +174,8 @@
         const loadingScreen = new LoadingScreen();
         loadingScreen.build({
             background: PIXI.Assets.get('background'),
-            creator: PIXI.Assets.get('creator'),
-            name: PIXI.Assets.get('name'),
+            creator:    PIXI.Assets.get('creator'),
+            name:       PIXI.Assets.get('name'),
         });
         app.stage.addChild(loadingScreen);
 
@@ -201,7 +201,7 @@
         app.stage.addChild(mainScene);
 
         function layoutMain() {
-            mainScene.layout(director.dw, director.dh, director.scale);
+            mainScene.layout(director.dw, director.dh);
         }
 
         // ── Single consolidated resize handler ──

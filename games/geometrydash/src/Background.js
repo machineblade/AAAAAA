@@ -59,11 +59,11 @@ export class Background extends PIXI.Container {
         this.colorElapsed = 0;
     }
 
-    layout(dw, dh, scaleFactorMax) {
+    layout(dw, dh) {
         this.bg.width = dw;
         this.bg.height = dh;
         this.bg.position.y = dh;
-        this.bg.tileScale.set(512 / this.bg.texture.frame.width * scaleFactorMax);
+        this.bg.tileScale.set(dh / this.bg.texture.frame.height);
 
         this.ground.width = dw;
         this.rightShadow.position.x = dw + 1;

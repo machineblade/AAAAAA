@@ -17,8 +17,8 @@ export class MainScene extends PIXI.Container {
         this.addChild(this.playButton);
     }
 
-    layout(dw, dh, scaleFactorMax) {
-        this.background.layout(dw, dh, scaleFactorMax);
+    layout(dw, dh) {
+        this.background.layout(dw, dh);
         this.playButton.position.set(dw / 2, dh / 2);
     }
 
