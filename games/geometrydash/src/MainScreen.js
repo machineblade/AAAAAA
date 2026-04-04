@@ -21,6 +21,7 @@ export class MainScene extends PIXI.Container {
 
         // Centre the play button
         this.playButton.position.set(dw / 2, dh / 2);
+        this.playButton.scale.set(0.25);
     }
 
     tick(dt) {
