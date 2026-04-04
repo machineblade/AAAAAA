@@ -42,11 +42,13 @@ export class Background extends PIXI.Container {
         this.addChild(this.groundContainer);
     }
 
-    layout(dw, dh, scaleMax) {
+    layout(dw, dh) {
+        // Fill exactly the design canvas (dw × dh) — no scaleMax inflation.
+        // tileScale is set so one tile spans the full canvas height.
         this.bg.width = dw;
         this.bg.height = dh;
         this.bg.position.y = dh;
-        this.bg.tileScale.set(512 / this.bg.texture.frame.width * scaleMax);
+        this.bg.tileScale.set(dh / this.bg.texture.frame.height);
 
         this.ground.width = dw;
         this.rightShadow.position.x = dw + 1;
