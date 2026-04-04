@@ -9,6 +9,11 @@
             "title": "Geometry Dash",
             "folder": "geometrydash",
             "description": "tryna recreate geometry dash"
+        },
+        {
+            "title": "Chess",
+            "folder": "chess",
+            "description": "well, what do you think this is, its obviously chess ^-^"
         }
     ]
 }

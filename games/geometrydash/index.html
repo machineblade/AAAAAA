@@ -27,16 +27,10 @@
         #hud {
             display: none;
         }
-
-        @font-face {
-            font-family: 'Pusab';
-            src: url('./assets/resources/fonts/pusab.otf') format('opentype');
-        }
     </style>
 </head>
 
 <body>
-
 
     <!-- Loading bar now rendered in PixiJS -->
 
@@ -73,14 +67,12 @@
 
         const director = new Director(app);
 
-        // ── Phase 1: load assets + splash text in parallel ──
-        const [, splashText] = await Promise.all([
-            PIXI.Assets.load(ASSETS_LOADING),
-            fetch('./assets/resources/gameSplashes.txt').then(r => r.text()),
-        ]);
-
-        const splashes = splashText.split('\n').map(l => l.trim()).filter(Boolean);
-        const splash = splashes[Math.floor(Math.random() * splashes.length)];
+        // ── Phase 1: load assets + font ──
+        await PIXI.Assets.load({
+            src: './assets/resources/fonts/pusab.otf',
+            data: { family: 'Pusab' },
+        });
+        await PIXI.Assets.load(ASSETS_LOADING);
 
         // ── Show loading screen with pixi progress bar ──
         const loadingScreen = new LoadingScreen();
@@ -90,7 +82,6 @@
             name: PIXI.Assets.get('name'),
             sliderGroove: PIXI.Assets.get('sliderGroove'),
             sliderBar: PIXI.Assets.get('sliderBar'),
-            splash,
         });
         app.stage.addChild(loadingScreen);
 

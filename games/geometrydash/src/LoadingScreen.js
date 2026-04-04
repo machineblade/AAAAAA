@@ -52,22 +52,24 @@ export class LoadingScreen extends PIXI.Container {
         ];
         const splash = SPLASHES[Math.floor(Math.random() * SPLASHES.length)];
 
+        const FONT_SIZE = 11;
+        const RESOLUTION = 4; // render at 4x then scale down — keeps it crisp
         this.splashText = new PIXI.Text({
             text: splash,
             style: {
                 fontFamily: 'Pusab',
-                fontWeight: '900',
-                fontSize: 11,
+                fontSize: FONT_SIZE * RESOLUTION,
                 fill: 0xffffff,
                 align: 'center',
                 dropShadow: {
                     color: 0x000000,
                     blur: 0,
-                    distance: 1,
+                    distance: RESOLUTION,
                     angle: Math.PI / 4,
                 },
             },
         });
+        this.splashText.scale.set(1 / RESOLUTION);
         this.splashText.anchor.set(0.5, 0);
         this.addChild(this.splashText);
     }
@@ -104,7 +106,7 @@ export class LoadingScreen extends PIXI.Container {
         const NAME_W = 300;    // game name logo width in px
         const NAME_GAP = 20;     // gap between creator and name logos
         const BAR_W_FRACTION = 0.6;    // bar width as fraction of screen width
-        const BAR_Y_FRACTION = 0.65;   // bar vertical position as fraction of screen height
+        const BAR_Y_FRACTION = 0.82;   // bar vertical position as fraction of screen height
         const BAR_SCALE = 1.0;    // multiplier on the groove's natural height (makes bar taller)
         const FILL_H_FRACTION = 0.5;    // fill height as fraction of scaled bar height
         const SPLASH_GAP = 10;     // gap between bar bottom and splash text
