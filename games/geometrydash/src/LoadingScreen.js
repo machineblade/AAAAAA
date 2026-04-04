@@ -53,7 +53,7 @@ export class LoadingScreen extends PIXI.Container {
 
     layout(dw, dh) {
         // ── Background: cover-fit ──
-        const tex   = this.textures.background;
+        const tex = this.textures.background;
         const scale = Math.max(dw / tex.width, dh / tex.height);
         this.bg.scale.set(scale);
         this.bg.position.set(dw / 2, dh / 2);
@@ -72,15 +72,18 @@ export class LoadingScreen extends PIXI.Container {
         this.barContainer.position.set(dw / 2, dh * 0.88);
 
         // Scale groove to fill barW
-        const grooveTex   = this.textures.sliderGroove;
+        const grooveTex = this.textures.sliderGroove;
         const grooveScale = this.barW / grooveTex.width;
         this.groove.scale.set(grooveScale);
         this.barH = grooveTex.height * grooveScale;
 
-        // Fill bar height matches groove height
-        this.barFill.x      = -this.barW / 2;
-        this.barFill.height = this.barH;
-        this.barFill.tileScale.set(this.barH / this.textures.sliderBar.height);
+        // Fill bar is inset inside the groove — 70% of groove height, centred
+        const inset = this.barH * 0.30;
+        const fillH = this.barH - inset;
+        this.barFill.x = -this.barW / 2;
+        this.barFill.y = 0;
+        this.barFill.height = fillH;
+        this.barFill.tileScale.set(fillH / this.textures.sliderBar.height);
 
         this._drawMask(this._progress);
     }
@@ -94,17 +97,18 @@ export class LoadingScreen extends PIXI.Container {
     _drawMask(p) {
         if (!this.barMask || this.barW === 0) return;
 
+        const inset = this.barH * 0.30;
+        const fillH = this.barH - inset;
         const w = this.barW * p;
-        const h = this.barH;
-        const r = h / 2;            // fully round left/right caps
-        const x = -this.barW / 2;  // left edge
-        const y = -h / 2;
+        const r = fillH / 2;
+        const x = -this.barW / 2;
+        const y = -fillH / 2;
 
         this.barMask.clear();
         if (w < 1) return;
 
         this.barMask
-            .roundRect(x, y, w, h, r)
+            .roundRect(x, y, w, fillH, r)
             .fill({ color: 0xffffff });
     }
 }
