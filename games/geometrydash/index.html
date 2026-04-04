@@ -23,6 +23,45 @@
             display: block;
         }
 
+        /* ── Click to enable sounds screen ── */
+        #clickPrompt {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            cursor: pointer;
+            z-index: 10;
+            transition: opacity 0.4s ease;
+        }
+
+        #clickPrompt.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #clickPrompt .prompt-title {
+            font-family: 'Arial Black', Arial, sans-serif;
+            font-size: clamp(18px, 4vw, 32px);
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 2px 2px 0 #000, -2px -2px 0 #000,
+                2px -2px 0 #000, -2px 2px 0 #000;
+            letter-spacing: 0.05em;
+        }
+
+        #clickPrompt .prompt-sub {
+            font-family: 'Arial Black', Arial, sans-serif;
+            font-size: clamp(10px, 2vw, 14px);
+            font-weight: 700;
+            color: #aaa;
+            text-shadow: 1px 1px 0 #000, -1px -1px 0 #000;
+            letter-spacing: 0.08em;
+        }
+
+        /* ── Loading bar HUD ── */
         #hud {
             position: fixed;
             inset: 0;
@@ -32,7 +71,12 @@
             align-items: center;
             justify-content: flex-end;
             padding-bottom: 7%;
-            transition: opacity 0.6s ease;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        #hud.visible {
+            opacity: 1;
         }
 
         #hud.hidden {
@@ -106,6 +150,13 @@
 
 <body>
 
+    <!-- Click to enable sounds screen -->
+    <div id="clickPrompt">
+        <div class="prompt-title">Click to Enable Sounds</div>
+        <div class="prompt-sub">REQUIRED</div>
+    </div>
+
+    <!-- Loading bar -->
     <div id="hud">
         <div class="bar-wrap">
             <div class="bar-border"></div>
@@ -120,33 +171,42 @@
     <script type="module">
         import { Director } from './src/Director.js';
         import { LoadingScreen } from './src/LoadingScreen.js';
-        import { MainScene } from './src/MainScreen.js'; // ← FIXED: was MainScene.js
+        import { MainScene } from './src/MainScreen.js';
 
-        // ── Asset manifest ──
-        // These are all loaded via PIXI.Assets so .get() works everywhere
+        // ── Asset manifests ──
         const ASSETS_LOADING = [
-            { alias: 'creator',    src: './assets/creator.png' },
-            { alias: 'name',       src: './assets/name.png' },
+            { alias: 'creator', src: './assets/creator.png' },
+            { alias: 'name', src: './assets/name.png' },
             { alias: 'background', src: './assets/background.png' },
         ];
 
         const ASSETS_MAIN = [
-            { alias: 'ground',       src: './assets/ground.png' },
-            { alias: 'groundline',   src: './assets/groundline.png' },
+            { alias: 'ground', src: './assets/ground.png' },
+            { alias: 'groundline', src: './assets/groundline.png' },
             { alias: 'groundshadow', src: './assets/groundshadow.png' },
-            { alias: 'playbutton',   src: './assets/playbutton.png' },
+            { alias: 'playbutton', src: './assets/playbutton.png' },
         ];
 
         // ── Progress bar helpers ──
         const barFill = document.getElementById('barFill');
-        const barPct  = document.getElementById('barPct');
-        const hud     = document.getElementById('hud');
+        const barPct = document.getElementById('barPct');
+        const hud = document.getElementById('hud');
 
         function setProgress(p) {
             p = Math.min(1, Math.max(0, p));
-            barFill.style.width  = (p * 100) + '%';
-            barPct.textContent   = Math.round(p * 100) + '%';
+            barFill.style.width = (p * 100) + '%';
+            barPct.textContent = Math.round(p * 100) + '%';
         }
+
+        // ── Wait for user click (satisfies autoplay policy) ──
+        const clickPrompt = document.getElementById('clickPrompt');
+        await new Promise(resolve => {
+            clickPrompt.addEventListener('click', resolve, { once: true });
+        });
+        clickPrompt.classList.add('hidden');
+
+        // ── Show loading bar ──
+        hud.classList.add('visible');
 
         // ── Init PixiJS ──
         const app = new PIXI.Application();
@@ -159,12 +219,10 @@
 
         const director = new Director(app);
 
-        // ── Phase 1: load assets needed for loading screen via PIXI.Assets ──
-        // Using PIXI.Assets for ALL textures so PIXI.Assets.get() works in every class
+        // ── Phase 1: load assets for loading screen ──
         setProgress(0.05);
 
         await PIXI.Assets.load(ASSETS_LOADING, (p) => {
-            // p goes 0→1; map into 0.05→0.65 of total
             setProgress(0.05 + p * 0.60);
         });
 
@@ -174,8 +232,8 @@
         const loadingScreen = new LoadingScreen();
         loadingScreen.build({
             background: PIXI.Assets.get('background'),
-            creator:    PIXI.Assets.get('creator'),
-            name:       PIXI.Assets.get('name'),
+            creator: PIXI.Assets.get('creator'),
+            name: PIXI.Assets.get('name'),
         });
         app.stage.addChild(loadingScreen);
 
@@ -184,9 +242,8 @@
         }
         layoutLoading();
 
-        // ── Phase 2: load remaining assets while loading screen is visible ──
+        // ── Phase 2: load remaining assets ──
         await PIXI.Assets.load(ASSETS_MAIN, (p) => {
-            // p goes 0→1; map into 0.65→0.95 of total
             setProgress(0.65 + p * 0.30);
         });
 
@@ -211,7 +268,8 @@
         });
         layoutMain();
 
-        // ── Instant cut: hide loading screen, show main scene ──
+        // ── Instant cut to main scene ──
+        hud.classList.remove('visible');
         hud.classList.add('hidden');
         app.stage.removeChild(loadingScreen);
 

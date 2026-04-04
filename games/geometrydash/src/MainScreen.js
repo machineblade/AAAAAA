@@ -24,7 +24,7 @@ export class MainScene extends PIXI.Container {
         });
         this.addChild(this.playButton);
 
-        // ── Menu music — looping, stopped when scene is destroyed ──
+        // ── Menu music — autoplay is safe, user already clicked ──
         this._music = new Audio('./assets/songs/menuLoop.mp3');
         this._music.loop = true;
         this._music.play();
