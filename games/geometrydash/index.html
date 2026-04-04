@@ -201,11 +201,7 @@
         app.stage.addChild(mainScene);
 
         function layoutMain() {
-            const scaleMax = Math.max(
-                director.ww / 480,
-                director.wh / 320
-            );
-            mainScene.layout(director.dw, director.dh, scaleMax);
+            mainScene.layout(director.dw, director.dh);
         }
 
         // ── Single consolidated resize handler ──
