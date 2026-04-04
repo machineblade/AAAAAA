@@ -1,4 +1,4 @@
-import { interpolate, packRGB } from './utils.js';
+import { interpolate, packRGB } from './Utils.js';
 
 export class Background extends PIXI.Container {
 

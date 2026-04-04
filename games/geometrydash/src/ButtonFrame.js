@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
 import * as easings from "./easings.js";
-import {interpolate} from "./utils.js";
+import {interpolate} from "./Utils.js";
 
 class Button extends PIXI.Container {
   constructor(textureName, frame) {
