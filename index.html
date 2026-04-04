@@ -2,227 +2,128 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Dash</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: #000;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-        }
-
-        canvas {
-            display: block;
-        }
-
-        #hud {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            padding-bottom: 7%;
-            transition: opacity 0.6s ease;
-        }
-
-        #hud.hidden {
-            opacity: 0;
-        }
-
-        .bar-wrap {
-            position: relative;
-            width: min(360px, 72vw);
-            height: 28px;
-        }
-
-        .bar-border {
-            position: absolute;
-            inset: 0;
-            z-index: 2;
-            border-radius: 5px;
-            border: 3px solid #c8860a;
-            box-shadow:
-                0 0 0 1px #7a4d00,
-                inset 0 0 0 1px #f5c842,
-                0 2px 10px rgba(0, 0, 0, 0.8);
-            background: transparent;
-        }
-
-        .bar-track {
-            position: absolute;
-            inset: 3px;
-            z-index: 0;
-            background: #150900;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 0%;
-            will-change: width;
-            border-radius: 2px;
-            z-index: 1;
-            transition: width 0.1s linear;
-            background: linear-gradient(to bottom,
-                    #ffe97a 0%,
-                    #f5c000 35%,
-                    #c88000 65%,
-                    #f5c000 100%);
-        }
-
-        .bar-fill::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, transparent 55%);
-        }
-
-        .bar-pct {
-            margin-top: 6px;
-            font-family: 'Arial Black', Arial, sans-serif;
-            font-size: clamp(10px, 2vw, 13px);
-            font-weight: 900;
-            color: #fff;
-            text-shadow: 1px 1px 0 #000, -1px -1px 0 #000,
-                1px -1px 0 #000, -1px 1px 0 #000;
-            letter-spacing: 0.05em;
-        }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Altruism Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-    <div id="hud">
-        <div class="bar-wrap">
-            <div class="bar-border"></div>
-            <div class="bar-track">
-                <div class="bar-fill" id="barFill"></div>
+    <!-- NAV -->
+    <nav id="nav">
+        <a href="#home" class="nav-logo">ALTRUISM<em>HUB</em></a>
+        <div class="nav-links">
+            <a href="#home">Home</a>
+            <a href="#videos">Videos</a>
+            <a href="#games">Games</a>
+            <a href="#about">About</a>
+            <a href="#" id="debugToggle" class="nav-debug">Debug</a>
+        </div>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="nav-mobile" id="mobileMenu">
+            <a href="#home">Home</a>
+            <a href="#videos">Videos</a>
+            <a href="#games">Games</a>
+            <a href="#about">About</a>
+            <a href="#" id="debugToggleMobile" class="nav-debug">Debug</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section id="home" class="hero">
+        <div class="hero-grid">
+            <div class="hero-left">
+                <span class="hero-tag">&#9679; Live now &mdash; New drops weekly</span>
+                <h1>GOOD<br><span class="t-accent">GAMES.</span><br><span class="t-pink">FUN. GAMES.</span></h1>
+                <p class="hero-sub">Discover beautiful games &amp; videos, all in one place.</p>
+                <div class="hero-btns">
+                    <a href="#videos" class="btn btn-primary">Watch Videos</a>
+                    <a href="#games" class="btn btn-ghost">Play Games</a>
+                </div>
+            </div>
+            <div class="hero-right">
+                <div class="featured-card" id="featuredCard">
+                    <div class="featured-thumb">
+                        <span class="badge">Featured</span>
+                        <img id="featuredThumb" src="" alt="Featured game" />
+                    </div>
+                    <div class="featured-info">
+                        <h3 id="featuredTitle">—</h3>
+                        <p id="featuredDesc"></p>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="bar-pct" id="barPct">0%</div>
+    </section>
+
+    <!-- VIDEOS -->
+    <section id="videos" class="section section-alt">
+        <div class="container">
+            <h2 class="section-title">Watch <em>Videos</em></h2>
+            <div class="videos-grid" id="videosGrid">
+                <p class="empty-msg">Loading videos…</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- GAMES -->
+    <section id="games" class="section">
+        <div class="container">
+            <h2 class="section-title">Play <em>Games</em></h2>
+            <div class="games-grid" id="gamesGrid">
+                <p class="empty-msg">Loading games…</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="section section-alt">
+        <div class="container">
+            <h2 class="section-title">About <em>Altruism Hub</em></h2>
+            <p class="about-text">Altruism Hub is a video &amp; game website for relaxing.</p>
+        </div>
+    </section>
+
+    <!-- VIDEO MODAL -->
+    <div class="modal-overlay" id="videoModal" role="dialog" aria-modal="true" aria-label="Video player">
+        <div class="modal video-modal-box">
+            <button class="modal-close" id="videoClose" aria-label="Close">&#x2715;</button>
+            <video id="modalVideo" controls playsinline></video>
+            <div class="modal-footer">
+                <span id="modalTitle"></span>
+            </div>
+        </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.5.2/pixi.min.js"></script>
-    <script type="module">
-        import { Director } from './src/Director.js';
-        import { LoadingScreen } from './src/LoadingScreen.js';
-        import { MainScene } from './src/MainScreen.js'; // ← FIXED: was MainScene.js
+    <!-- GAME MODAL -->
+    <div class="modal-overlay" id="gameModal" role="dialog" aria-modal="true" aria-label="Game player">
+        <div class="modal game-modal-box" id="gameModalBox">
+            <button class="modal-close" id="gameClose" aria-label="Close">&#x2715;</button>
+            <iframe id="gameFrame" title="Game" loading="lazy" allow="autoplay; camera; microphone"></iframe>
+        </div>
+    </div>
 
-        // ── Asset manifest ──
-        // These are all loaded via PIXI.Assets so .get() works everywhere
-        const ASSETS_LOADING = [
-            { alias: 'creator', src: './assets/creator.png' },
-            { alias: 'name', src: './assets/name.png' },
-            { alias: 'background', src: './assets/background.png' },
-        ];
+    <!-- DEBUG PANEL -->
+    <div class="modal-overlay debug-overlay" id="debugOverlay">
+        <div class="debug-panel">
+            <div class="debug-header">
+                <span>DEBUG CONSOLE</span>
+                <button id="debugClose" aria-label="Close debug">&#x2715;</button>
+            </div>
+            <pre id="debugContent"></pre>
+        </div>
+    </div>
 
-        const ASSETS_MAIN = [
-            { alias: 'ground', src: './assets/ground.png' },
-            { alias: 'groundline', src: './assets/groundline.png' },
-            { alias: 'groundshadow', src: './assets/groundshadow.png' },
-            { alias: 'playbutton', src: './assets/playbutton.png' },
-        ];
-
-        // ── Progress bar helpers ──
-        const barFill = document.getElementById('barFill');
-        const barPct = document.getElementById('barPct');
-        const hud = document.getElementById('hud');
-
-        function setProgress(p) {
-            p = Math.min(1, Math.max(0, p));
-            barFill.style.width = (p * 100) + '%';
-            barPct.textContent = Math.round(p * 100) + '%';
-        }
-
-        // ── Init PixiJS ──
-        const app = new PIXI.Application();
-        await app.init({
-            resizeTo: window,
-            backgroundColor: 0x000000,
-            antialias: true,
-        });
-        document.body.appendChild(app.canvas);
-
-        const director = new Director(app);
-
-        // ── Phase 1: load assets needed for loading screen via PIXI.Assets ──
-        // Using PIXI.Assets for ALL textures so PIXI.Assets.get() works in every class
-        setProgress(0.05);
-
-        await PIXI.Assets.load(ASSETS_LOADING, (p) => {
-            // p goes 0→1; map into 0.05→0.65 of total
-            setProgress(0.05 + p * 0.60);
-        });
-
-        setProgress(0.65);
-
-        // ── Show loading screen ──
-        const loadingScreen = new LoadingScreen();
-        loadingScreen.build({
-            background: PIXI.Assets.get('background'),
-            creator: PIXI.Assets.get('creator'),
-            name: PIXI.Assets.get('name'),
-        });
-        app.stage.addChild(loadingScreen);
-
-        function layoutLoading() {
-            loadingScreen.layout(director.dw, director.dh);
-        }
-        layoutLoading();
-
-        // ── Phase 2: load remaining assets while loading screen is visible ──
-        await PIXI.Assets.load(ASSETS_MAIN, (p) => {
-            // p goes 0→1; map into 0.65→0.95 of total
-            setProgress(0.65 + p * 0.30);
-        });
-
-        setProgress(1.0);
-
-        // ── 1 second pause so player sees 100% ──
-        await new Promise(r => setTimeout(r, 1000));
-
-        // ── Build main scene ──
-        const mainScene = new MainScene();
-        mainScene.build();
-        app.stage.addChild(mainScene);
-
-        function layoutMain() {
-            const scaleMax = Math.max(
-                director.ww / 480,
-                director.wh / 320
-            );
-            mainScene.layout(director.dw, director.dh, scaleMax);
-        }
-
-        // ── Single consolidated resize handler ──
-        director.onResize(() => {
-            layoutLoading();
-            layoutMain();
-        });
-        layoutMain();
-
-        // ── Instant cut: hide loading screen, show main scene ──
-        hud.classList.add('hidden');
-        app.stage.removeChild(loadingScreen);
-
-        app.ticker.add((ticker) => {
-            mainScene.tick(ticker.deltaTime / 60);
-        });
-    </script>
+    <script src="script.js" type="module"></script>
 </body>
 
 </html>
