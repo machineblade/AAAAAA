@@ -23,6 +23,17 @@ export class MainScene extends PIXI.Container {
             // TODO: transition to game scene
         });
         this.addChild(this.playButton);
+
+        // ── Menu music — looping, stopped when scene is destroyed ──
+        this._music = new Audio('./assets/songs/menuLoop.mp3');
+        this._music.loop = true;
+        this._music.play();
+    }
+
+    destroy(options) {
+        this._music.pause();
+        this._music.currentTime = 0;
+        super.destroy(options);
     }
 
     layout(dw, dh) {
@@ -32,7 +43,7 @@ export class MainScene extends PIXI.Container {
         this.gameName.scale.set(300 / this.gameName.texture.width);
         this.gameName.position.set(dw / 2, 12);
 
-        // Creator: bottom-left, offset by half size so centre-anchor sits in corner
+        // Creator: bottom-left, offset by half its size so centre-anchor sits in corner
         const creatorHalf = (20 / PIXI.Assets.get('creator').height) * PIXI.Assets.get('creator').width / 2;
         this.creator.position.set(10 + creatorHalf, dh - 10 - 10);
 
