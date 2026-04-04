@@ -23,7 +23,6 @@
             display: block;
         }
 
-        /* ── Loading bar HUD (above canvas) ── */
         #hud {
             position: fixed;
             inset: 0;
@@ -40,15 +39,6 @@
             opacity: 0;
         }
 
-        /*
-         * Loading bar — two image slots:
-         *
-         *   assets/loadingBar.png        → yellow/orange fill (tileable horizontally)
-         *   assets/loadingBarBorder.png  → gold frame border (9-slice)
-         *
-         * CSS fallback renders automatically until you add those files.
-         * To swap in real images, replace the "CSS fallback" blocks below.
-         */
         .bar-wrap {
             position: relative;
             width: min(360px, 72vw);
@@ -60,15 +50,6 @@
             inset: 0;
             z-index: 2;
             border-radius: 5px;
-
-            /*
-             * Real image (9-slice so corners never stretch):
-             * border-image: url('./assets/loadingBarBorder.png') 10 fill stretch;
-             * border-image-width: 10px;
-             * background: transparent;
-             */
-
-            /* CSS fallback */
             border: 3px solid #c8860a;
             box-shadow:
                 0 0 0 1px #7a4d00,
@@ -96,13 +77,6 @@
             border-radius: 2px;
             z-index: 1;
             transition: width 0.1s linear;
-
-            /*
-             * Real image (tiles left-to-right, never stretches):
-             * background: url('./assets/loadingBar.png') left center / auto 100% repeat-x;
-             */
-
-            /* CSS fallback */
             background: linear-gradient(to bottom,
                     #ffe97a 0%,
                     #f5c000 35%,
@@ -146,9 +120,10 @@
     <script type="module">
         import { Director } from './src/Director.js';
         import { LoadingScreen } from './src/LoadingScreen.js';
-        import { MainScene } from './src/MainScene.js';
+        import { MainScene } from './src/MainScreen.js'; // ← FIXED: was MainScene.js
 
         // ── Asset manifest ──
+        // These are all loaded via PIXI.Assets so .get() works everywhere
         const ASSETS_LOADING = [
             { alias: 'creator', src: './assets/creator.png' },
             { alias: 'name', src: './assets/name.png' },
@@ -172,19 +147,6 @@
             barPct.textContent = Math.round(p * 100) + '%';
         }
 
-        // ── Load a texture preserving alpha (avoids premultiply artifacts) ──
-        function loadTexture(src) {
-            return new Promise(resolve => {
-                const img = new Image();
-                img.onload = () => {
-                    const tex = PIXI.Texture.from(img);
-                    tex.source.alphaMode = 'no-premultiply-alpha';
-                    resolve(tex);
-                };
-                img.src = src;
-            });
-        }
-
         // ── Init PixiJS ──
         const app = new PIXI.Application();
         await app.init({
@@ -196,29 +158,34 @@
 
         const director = new Director(app);
 
-        // ── Phase 1: load assets needed for loading screen ──
+        // ── Phase 1: load assets needed for loading screen via PIXI.Assets ──
+        // Using PIXI.Assets for ALL textures so PIXI.Assets.get() works in every class
         setProgress(0.05);
 
-        const [creatorTex, nameTex, bgTex] = await Promise.all([
-            loadTexture('./assets/creator.png').then(t => { setProgress(0.30); return t; }),
-            loadTexture('./assets/name.png').then(t => { setProgress(0.50); return t; }),
-            loadTexture('./assets/background.png').then(t => { setProgress(0.65); return t; }),
-        ]);
+        await PIXI.Assets.load(ASSETS_LOADING, (p) => {
+            // p goes 0→1; map into 0.05→0.65 of total
+            setProgress(0.05 + p * 0.60);
+        });
+
+        setProgress(0.65);
 
         // ── Show loading screen ──
         const loadingScreen = new LoadingScreen();
-        loadingScreen.build({ background: bgTex, creator: creatorTex, name: nameTex });
+        loadingScreen.build({
+            background: PIXI.Assets.get('background'),
+            creator: PIXI.Assets.get('creator'),
+            name: PIXI.Assets.get('name'),
+        });
         app.stage.addChild(loadingScreen);
 
         function layoutLoading() {
             loadingScreen.layout(director.dw, director.dh);
         }
-        director.onResize(layoutLoading);
         layoutLoading();
 
         // ── Phase 2: load remaining assets while loading screen is visible ──
         await PIXI.Assets.load(ASSETS_MAIN, (p) => {
-            // p goes 0→1 for this batch; map into 0.65→0.95 of total
+            // p goes 0→1; map into 0.65→0.95 of total
             setProgress(0.65 + p * 0.30);
         });
 
@@ -240,11 +207,16 @@
             );
             mainScene.layout(director.dw, director.dh, scaleMax);
         }
-        director.onResize(() => { layoutLoading(); layoutMain(); });
+
+        // ── Single consolidated resize handler ──
+        director.onResize(() => {
+            layoutLoading();
+            layoutMain();
+        });
         layoutMain();
 
         // ── Fade out loading screen, fade in main scene ──
-        hud.classList.add('hidden'); // hide loading bar
+        hud.classList.add('hidden');
 
         const FADE_MS = 700;
         const start = performance.now();
@@ -253,10 +225,10 @@
             const t = Math.min(1, (now - start) / FADE_MS);
             loadingScreen.alpha = 1 - t;
             mainScene.alpha = t;
-            if (t < 1) requestAnimationFrame(fade);
-            else {
+            if (t < 1) {
+                requestAnimationFrame(fade);
+            } else {
                 app.stage.removeChild(loadingScreen);
-                // Start scrolling ticker only after fade completes
                 app.ticker.add((ticker) => {
                     mainScene.tick(ticker.deltaTime / 60);
                 });
