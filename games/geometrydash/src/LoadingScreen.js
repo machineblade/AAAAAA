@@ -3,7 +3,7 @@
 // ╚══════════════════════════════════════════════════════════════╝
 
 // ── Logos ──────────────────────────────────────────────────────
-const CREATOR_W = 105;        // creator logo width in px
+const CREATOR_W = 150;        // creator logo width in px
 const CREATOR_TOP = 40;         // distance from top of screen
 const NAME_W = 300;        // game name logo width in px
 const NAME_GAP = 20;         // gap between creator and name logos
