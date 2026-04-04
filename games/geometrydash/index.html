@@ -191,13 +191,12 @@
 
         setProgress(1.0);
 
-        // ── Brief pause so player sees 100% ──
-        await new Promise(r => setTimeout(r, 400));
+        // ── 1 second pause so player sees 100% ──
+        await new Promise(r => setTimeout(r, 1000));
 
-        // ── Build main scene (hidden, alpha=0) ──
+        // ── Build main scene ──
         const mainScene = new MainScene();
         mainScene.build();
-        mainScene.alpha = 0;
         app.stage.addChild(mainScene);
 
         function layoutMain() {
@@ -215,26 +214,13 @@
         });
         layoutMain();
 
-        // ── Fade out loading screen, fade in main scene ──
+        // ── Instant cut: hide loading screen, show main scene ──
         hud.classList.add('hidden');
+        app.stage.removeChild(loadingScreen);
 
-        const FADE_MS = 700;
-        const start = performance.now();
-
-        function fade(now) {
-            const t = Math.min(1, (now - start) / FADE_MS);
-            loadingScreen.alpha = 1 - t;
-            mainScene.alpha = t;
-            if (t < 1) {
-                requestAnimationFrame(fade);
-            } else {
-                app.stage.removeChild(loadingScreen);
-                app.ticker.add((ticker) => {
-                    mainScene.tick(ticker.deltaTime / 60);
-                });
-            }
-        }
-        requestAnimationFrame(fade);
+        app.ticker.add((ticker) => {
+            mainScene.tick(ticker.deltaTime / 60);
+        });
     </script>
 </body>
 
