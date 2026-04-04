@@ -6,7 +6,6 @@ export class Background extends PIXI.Container {
             texture: PIXI.Assets.get('background'),
             applyAnchorToTexture: true,
         });
-        this.bg.anchor.y = 1;
         this.bg.tint = 0x0066ff;
         this.addChild(this.bg);
 
@@ -47,7 +46,7 @@ export class Background extends PIXI.Container {
         // tileScale is set so one tile spans the full canvas height.
         this.bg.width = dw;
         this.bg.height = dh;
-        this.bg.position.y = dh;
+        this.bg.position.set(0, 0);
         this.bg.tileScale.set(dh / this.bg.texture.frame.height);
 
         this.ground.width = dw;
