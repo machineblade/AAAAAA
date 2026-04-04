@@ -23,44 +23,6 @@
             display: block;
         }
 
-        /* ── Click to enable sounds screen ── */
-        #clickPrompt {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            cursor: pointer;
-            z-index: 10;
-            transition: opacity 0.4s ease;
-        }
-
-        #clickPrompt.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #clickPrompt .prompt-title {
-            font-family: 'Arial Black', Arial, sans-serif;
-            font-size: clamp(18px, 4vw, 32px);
-            font-weight: 900;
-            color: #fff;
-            text-shadow: 2px 2px 0 #000, -2px -2px 0 #000,
-                2px -2px 0 #000, -2px 2px 0 #000;
-            letter-spacing: 0.05em;
-        }
-
-        #clickPrompt .prompt-sub {
-            font-family: 'Arial Black', Arial, sans-serif;
-            font-size: clamp(10px, 2vw, 14px);
-            font-weight: 700;
-            color: #aaa;
-            text-shadow: 1px 1px 0 #000, -1px -1px 0 #000;
-            letter-spacing: 0.08em;
-        }
-
         /* ── Loading bar HUD — now rendered in PixiJS, no CSS needed ── */
         #hud {
             display: none;
@@ -70,11 +32,6 @@
 
 <body>
 
-    <!-- Click to enable sounds screen -->
-    <div id="clickPrompt">
-        <div class="prompt-title">Click to Enable Sounds</div>
-        <div class="prompt-sub">REQUIRED</div>
-    </div>
 
     <!-- Loading bar now rendered in PixiJS -->
 
