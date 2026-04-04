@@ -15,7 +15,6 @@ export class MainScene extends PIXI.Container {
 
         // ── Creator logo — bottom left, links to site ──
         this.creator = new Button('creator', 20, 'https://altruism1.vercel.app');
-        this.creator.view.anchor.set(0, 1);
         this.addChild(this.creator);
 
         // ── Play button — centred ──
@@ -33,8 +32,9 @@ export class MainScene extends PIXI.Container {
         this.gameName.scale.set(300 / this.gameName.texture.width);
         this.gameName.position.set(dw / 2, 12);
 
-        // Creator: bottom-left with 10pt padding
-        this.creator.position.set(10, dh - 10);
+        // Creator: bottom-left, offset by half size so centre-anchor sits in corner
+        const creatorHalf = (20 / PIXI.Assets.get('creator').height) * PIXI.Assets.get('creator').width / 2;
+        this.creator.position.set(10 + creatorHalf, dh - 10 - 10);
 
         // Play button: centred
         this.playButton.position.set(dw / 2, dh / 2);
