@@ -17,6 +17,13 @@ export class MainScene extends PIXI.Container {
         this.creator = new Button('creator', 13, 'https://altruism1.vercel.app');
         this.addChild(this.creator);
 
+        // ── Close button — top left ──
+        this.closeButton = new Button('closeButton', 25, () => {
+            console.log('Close pressed!');
+            // TODO: handle close action
+        });
+        this.addChild(this.closeButton);
+
         // ── Play button — centred ──
         this.playButton = new Button('playbutton', 80, () => {
             console.log('Play pressed!');
@@ -60,6 +67,10 @@ export class MainScene extends PIXI.Container {
         const creatorHalf = (12 / PIXI.Assets.get('creator').height) * PIXI.Assets.get('creator').width / 2;
         this.creator.position.set(10 + creatorHalf, dh - 10 - 1);
 
+        // Close button: top-left, offset by half its size so centre-anchor sits in corner
+        const closeHalf = 25 / 2;
+        this.closeButton.position.set(10 + closeHalf, 10 + closeHalf);
+
         // Play button: centred
         this.playButton.position.set(dw / 2, dh / 2);
 
@@ -72,6 +83,7 @@ export class MainScene extends PIXI.Container {
     tick(dt) {
         this.background.tick(dt);
         this.creator.tick(dt);
+        this.closeButton.tick(dt);
         this.playButton.tick(dt);
         this.garageButton.tick(dt);
         this.editButton.tick(dt);
