@@ -13,7 +13,7 @@ export class MainScene extends PIXI.Container {
             console.log('Play pressed!');
             // TODO: transition to game scene
         });
-        this.playButton.scale.set(0.23);
+        this.playButton.scale.set(0.21);
         this.addChild(this.playButton);
     }
 
