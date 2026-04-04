@@ -1,8 +1,8 @@
 {
     "featured": {
-        "title": "Geometry Dash",
-        "folder": "geometrydash",
-        "description": "tryna recreate geometry dash"
+        "title": "Gravity Squares",
+        "folder": "gravitysquares",
+        "description": "gravity squares 2.0"
     },
     "games": [
         {
@@ -14,6 +14,11 @@
             "title": "Chess",
             "folder": "chess",
             "description": "well, what do you think this is, its obviously chess ^-^"
+        },
+        {
+            "title": "Gravity Squares",
+            "folder": "gravitysquares",
+            "description": "gravity squares 2.0"
         }
     ]
 }
