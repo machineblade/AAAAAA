@@ -1,15 +1,18 @@
+import { interpolate, packRGB } from './utils.js';
+
 export class Background extends PIXI.Container {
 
     build() {
-        // ── Scrolling background tiles ──
+        // ── Scrolling background ──
         this.bg = new PIXI.TilingSprite({
             texture: PIXI.Assets.get('background'),
             applyAnchorToTexture: true,
         });
+        this.bg.anchor.y = 1;
         this.bg.tint = 0x0066ff;
         this.addChild(this.bg);
 
-        // ── Ground container (ground + shadows + line) ──
+        // ── Ground container ──
         this.groundContainer = new PIXI.Container();
 
         this.ground = new PIXI.TilingSprite({
@@ -39,15 +42,28 @@ export class Background extends PIXI.Container {
         this.groundContainer.addChild(this.line);
 
         this.addChild(this.groundContainer);
+
+        // ── Color cycling ──
+        this.colorStops = [
+            [0, 102, 255],
+            [255, 0, 255],
+            [255, 0, 125],
+            [255, 0, 0],
+            [255, 125, 0],
+            [255, 255, 0],
+            [0, 255, 0],
+            [0, 255, 255],
+        ];
+        this.colorIndexA = 0;
+        this.colorIndexB = 1;
+        this.colorElapsed = 0;
     }
 
-    layout(dw, dh) {
-        // Fill exactly the design canvas (dw × dh) — no scaleMax inflation.
-        // tileScale is set so one tile spans the full canvas height.
+    layout(dw, dh, scaleFactorMax) {
         this.bg.width = dw;
         this.bg.height = dh;
-        this.bg.position.set(0, 0);
-        this.bg.tileScale.set(dh / this.bg.texture.frame.height);
+        this.bg.position.y = dh;
+        this.bg.tileScale.set(512 / this.bg.texture.frame.width * scaleFactorMax);
 
         this.ground.width = dw;
         this.rightShadow.position.x = dw + 1;
@@ -56,7 +72,28 @@ export class Background extends PIXI.Container {
     }
 
     tick(dt) {
+        // ── Scroll ──
         this.bg.tilePosition.x -= dt * 31.158;
         this.ground.tilePosition.x -= dt * 311.58;
+
+        // ── Color cycle (shifts every 5s, lerps over 4s) ──
+        this.colorElapsed += dt;
+        if (this.colorElapsed >= 5) {
+            this.colorElapsed -= 5;
+            this.colorIndexA = (this.colorIndexA + 1) % this.colorStops.length;
+            this.colorIndexB = (this.colorIndexB + 1) % this.colorStops.length;
+        }
+
+        const colorA = this.colorStops[this.colorIndexA];
+        const colorB = this.colorStops[this.colorIndexB];
+        const t = Math.min(this.colorElapsed / 4, 1);
+        const tint = packRGB(
+            interpolate(colorA[0], colorB[0], t),
+            interpolate(colorA[1], colorB[1], t),
+            interpolate(colorA[2], colorB[2], t),
+        );
+
+        this.bg.tint = tint;
+        this.ground.tint = tint;
     }
 }
