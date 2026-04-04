@@ -3,30 +3,32 @@ import { bounceOut } from './easings.js';
 export class Button extends PIXI.Container {
 
     /**
-     * @param {string} alias - PIXI.Assets alias for the button texture
-     * @param {function} onPress - callback fired when pointer is released over button
+     * @param {string}   alias    - PIXI.Assets alias for the button texture
+     * @param {number}   points   - size in design-space points (scales by height)
+     * @param {function|string} [redirect] - optional: callback on press, or a URL string to open in a new tab
      */
-    constructor(alias, onPress) {
+    constructor(alias, points, redirect) {
         super();
 
-        this._onPress = onPress;
+        this._baseScale = points / PIXI.Assets.get(alias).height;
+        this._redirect = redirect;
         this._held = false;
 
         // ── Sprite ──
         this.view = new PIXI.Sprite(PIXI.Assets.get(alias));
         this.view.anchor.set(0.5);
+        this.view.scale.set(this._baseScale);
         this.addChild(this.view);
 
         // ── Animation state ──
-        this._fromScale = 1;
-        this._toScale = 1;
+        this._fromScale = this._baseScale;
+        this._toScale = this._baseScale;
         this._duration = 0;
         this._elapsed = 0;
         this._animating = false;
 
         // ── Input ──
         this.eventMode = 'static';
-        this.cursor = 'pointer';
         this.on('pointerdown', this._onDown, this);
         this.on('pointerup', this._onUp, this);
         this.on('pointerupoutside', this._onUpOut, this);
@@ -38,30 +40,32 @@ export class Button extends PIXI.Container {
 
     _onDown() {
         this._held = true;
-        this._animateTo(1.26, 0.3);
+        this._animateTo(this._baseScale * 1.26, 0.3);
     }
 
     _onUp() {
         if (this._held) {
             this._held = false;
             this._stopAnim();
-            if (this._onPress) this._onPress();
+            if (typeof this._redirect === 'string') {
+                window.open(this._redirect, '_blank');
+            } else if (typeof this._redirect === 'function') {
+                this._redirect();
+            }
         }
     }
 
     _onUpOut() {
         this._held = false;
-        this._animateTo(1, 0.4);
+        this._animateTo(this._baseScale, 0.4);
     }
 
     _onOver() {
-        // Dragged back onto the button while held — re-select
-        if (this._held) this._animateTo(1.26, 0.3);
+        if (this._held) this._animateTo(this._baseScale * 1.26, 0.3);
     }
 
     _onOut() {
-        // Dragged off while held — deselect
-        if (this._held) this._animateTo(1, 0.4);
+        if (this._held) this._animateTo(this._baseScale, 0.4);
     }
 
     // ── Animation helpers ──
@@ -76,7 +80,7 @@ export class Button extends PIXI.Container {
 
     _stopAnim() {
         this._animating = false;
-        this.view.scale.set(1);
+        this.view.scale.set(this._baseScale);
     }
 
     // ── Tick (call every frame, dt in seconds) ──
