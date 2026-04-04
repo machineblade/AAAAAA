@@ -6,7 +6,7 @@ export class LoadingScreen extends PIXI.Container {
     build(textures) {
         this.textures = textures;
 
-        // ── Static background (full natural size, centred, blue tint) ──
+        // ── Static background (scaled to fill canvas, blue tint) ──
         this.bg = new PIXI.Sprite(textures.background);
         this.bg.anchor.set(0.5);
         this.bg.tint = 0x0066ff;
@@ -24,7 +24,10 @@ export class LoadingScreen extends PIXI.Container {
     }
 
     layout(dw, dh) {
-        // Background: natural size, centred
+        // Background: scale to fill the full canvas (cover-fit)
+        const tex = this.textures.background;
+        const scale = Math.max(dw / tex.width, dh / tex.height);
+        this.bg.scale.set(scale);
         this.bg.position.set(dw / 2, dh / 2);
 
         // Creator logo: 105px wide, 40px from top
