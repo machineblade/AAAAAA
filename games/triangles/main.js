@@ -218,7 +218,60 @@ makeSlider("timeslider", "timelabel", v => `${v}s`, v => {
   resetPlatform();
 });
 
-// ── Main loop ──
+// ── Right-click: spawn triangle at cursor ──
+canvas.addEventListener("contextmenu", (e) => {
+  e.preventDefault();
+
+  // Convert screen coords → world coords
+  const ww = window.innerWidth, wh = window.innerHeight;
+  let vw = VIEW_WIDTH, vh = VIEW_HEIGHT;
+  const wr = ww / VIEW_WIDTH, hr = wh / VIEW_HEIGHT;
+  if (hr > wr) { vw = VIEW_WIDTH; vh = wh / wr; }
+  else { vw = ww / hr; vh = VIEW_HEIGHT; }
+
+  const worldX = (e.clientX / ww) * vw + (cameraX - vw / 2);
+  const worldY = (e.clientY / wh) * vh + (cameraY - vh / 2);
+
+  let name, color;
+  const usedColors = triangles.map(t => t.render.fillStyle);
+  let attempts = 0;
+  do {
+    name = COLORS[Math.floor(Math.random() * COLORS.length)];
+    color = name.replaceAll(" ", "").toLowerCase();
+    attempts++;
+  } while (usedColors.includes(color) && attempts < 20);
+
+  const radius = random(15, 30);
+  const triangle = Matter.Bodies.polygon(worldX, worldY, 3, radius, {
+    friction: currentFriction,
+    frictionAir: 0,
+    restitution: currentRestitution,
+    inertia: currentInertia,
+    render: { fillStyle: color }
+  });
+
+  triangle.alive = true;
+  triangle.name = name;
+  triangle.target = { x: worldX, y: worldY };
+  Matter.Body.rotate(triangle, Math.PI / 2);
+  triangles.push(triangle);
+  Matter.Composite.add(world, triangle);
+
+  const cardWrapper = document.createElement("div");
+  cardWrapper.className = "card-wrapper";
+  const card = document.createElement("div");
+  card.className = "triangle-card";
+  card.innerHTML = `
+    <span class="card-icon" style="color:${color}">▲&nbsp;</span>
+    <span class="card-text">${name}</span>
+  `;
+  cardWrapper.appendChild(card);
+  triangleCards.appendChild(cardWrapper);
+  triangle.card = cardWrapper;
+
+  cardWrapper.addEventListener("mouseover", () => { focusedTriangle = triangle; });
+  cardWrapper.addEventListener("mouseout", () => { focusedTriangle = null; });
+});
 Matter.Events.on(engine, "afterUpdate", (event) => {
   const currentWidth = platform.bounds.max.x - platform.bounds.min.x;
   if (currentWidth > MIN_LENGTH)
