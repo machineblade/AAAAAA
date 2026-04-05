@@ -1,0 +1,52 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+canvas {
+  display: block;
+}
+
+#triangles {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 230px;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+.card-wrapper {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: all 0.5s ease;
+  margin-bottom: 20px;
+}
+
+.triangle-card {
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.5s ease;
+  cursor: pointer;
+}
+
+.card-wrapper.dead {
+  color: red;
+  grid-template-rows: 0fr;
+  margin-bottom: 0;
+  opacity: 0;
+}
+
+.card-icon {
+  display: inline-block;
+  font-size: 25px;
+  margin-top: -4px;
+}
+
+.card-text {
+  font-family: sans-serif;
+  font-size: 18px;
+  font-weight: bold;
+}

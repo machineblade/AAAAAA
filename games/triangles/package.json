@@ -1,0 +1,17 @@
+{
+  "name": "triangles",
+  "version": "1.0.0",
+  "description": "Triangles push each other off a platform.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "matter-js": "^0.20.0"
+  },
+  "devDependencies": {
+    "howler": "^2.2.4",
+    "vite": "^8.0.3"
+  }
+}

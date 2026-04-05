@@ -6,9 +6,9 @@
     },
     "games": [
         {
-            "title": "Geometry Dash",
-            "folder": "geometrydash",
-            "description": "tryna recreate geometry dash"
+            "title": "Triangle Championship",
+            "folder": "triangles",
+            "description": "triangles push each other off a platform"
         },
         {
             "title": "Chess",
