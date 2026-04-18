@@ -3,7 +3,7 @@
         "title": "Nebula Game Engine",
         "folder": "NebulEngine",
         "description": "a wip (work in progress) game engine that is online"
-    }
+    },
     "games": [
         {
             "title": "Triangle Championship",
