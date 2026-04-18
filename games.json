@@ -1,9 +1,9 @@
 {
     "featured": {
-        "title": "Gravity Squares",
-        "folder": "gravitysquares",
-        "description": "gravity squares 2.0"
-    },
+        "title": "Nebula Game Engine",
+        "folder": "NebulEngine",
+        "description": "a wip (work in progress) game engine that is online"
+    }
     "games": [
         {
             "title": "Triangle Championship",
@@ -29,6 +29,11 @@
             "title": "image to obama",
             "folder": "eliteobamaprograms",
             "description": "obabina ;)"
+        },
+        {
+            "title": "Nebula Game Engine",
+            "folder": "NebulEngine",
+            "description": "a wip (work in progress) game engine that is online"
         }
     ]
 }
