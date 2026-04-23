@@ -34,6 +34,11 @@
             "title": "Nebula Game Engine",
             "folder": "NebulEngine",
             "description": "a wip (work in progress) game engine that is online"
+        },
+        {
+            "title": "Sloped",
+            "folder": "sloped",
+            "description": "sloped game :D"
         }
     ]
 }

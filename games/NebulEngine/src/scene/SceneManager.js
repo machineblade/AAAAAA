@@ -22,8 +22,60 @@ export class SceneManager {
     this._engine = Matter.Engine.create();
     this._world = this._engine.world;
     this._world.gravity.x = 0;
-    this._world.gravity.y = 0;
+    // Default world gravity strength — scripts can override via
+    // `this.world.settings.gravity.strength = N` (see Engine._scriptWorld).
+    this._world.gravity.y = 1;
     this._createBounds(w, h);
+    this._registerCollisionEvents();
+  }
+
+  /**
+   * Set the Matter world's vertical gravity. 0 = zero-G (default), 1 ≈ Earth.
+   * Per-entity `PhysicsComponent.gravity` still stacks on top; fixed bodies
+   * (isStatic) ignore gravity as Matter does by default.
+   */
+  setGravityY (y) {
+    if (!this._world) return;
+    const v = Number.isFinite(y) ? y : 0;
+    this._world.gravity.y = v;
+  }
+
+  getGravityY () {
+    return this._world ? this._world.gravity.y : 0;
+  }
+
+  /**
+   * Bridge Matter collisionStart/End events into each entity's script hook.
+   *   onCollide(selfEntity, otherEntity, pair)
+   *   onSeparate(selfEntity, otherEntity, pair)
+   * Ignores pairs where either body isn't linked to an entity (walls).
+   */
+  _registerCollisionEvents () {
+    if (!this._engine || typeof Matter === 'undefined') return;
+    const dispatch = (hookName) => (event) => {
+      for (const pair of event.pairs) {
+        const a = pair.bodyA?.plugin?.entity ?? null;
+        const b = pair.bodyB?.plugin?.entity ?? null;
+        if (!a || !b) continue;
+        this._invokeScriptHook(a, hookName, b, pair);
+        this._invokeScriptHook(b, hookName, a, pair);
+      }
+    };
+    Matter.Events.on(this._engine, 'collisionStart', dispatch('onCollide'));
+    Matter.Events.on(this._engine, 'collisionEnd',   dispatch('onSeparate'));
+  }
+
+  _invokeScriptHook (entity, hookName, other, pair) {
+    const sc = entity.getComponent?.('script');
+    const fn = sc?._script?.[hookName];
+    if (typeof fn !== 'function') return;
+    try {
+      fn.call(sc._script, entity, other, pair);
+    } catch (err) {
+      const msg = `[${entity.name}] script.${hookName}: ${err.message}`;
+      if (sc?._logger) sc._logger.error(msg);
+      else             console.error(msg, err);
+    }
   }
 
   _createBounds (w, h) {
@@ -84,16 +136,26 @@ export class SceneManager {
       const lx = dx * cos - dy * sin;
       const ly = dx * sin + dy * cos;
 
+      // Account for the sprite's visual scale — the PIXI Graphics is
+      // scaled in syncGraphics, so hitTest must match the rendered size.
+      const sx = sprite.scaleX ?? 1;
+      const sy = sprite.scaleY ?? 1;
       switch (sprite.shape) {
         case 'rect':
-          if (Math.abs(lx) <= sprite.w / 2 && Math.abs(ly) <= sprite.h / 2) return entity;
+        case 'square':
+        case 'rsquare':
+          if (Math.abs(lx) <= (sprite.w * sx) / 2 && Math.abs(ly) <= (sprite.h * sy) / 2) return entity;
           break;
         case 'diamond':
         case 'star':
+        case 'rstar':
         case 'circle':
         default: {
-          const radius = sprite.r || Math.max(sprite.w, sprite.h) / 2;
-          if (Math.hypot(dx, dy) <= radius) return entity;
+          // Non-uniform scale on a circular shape → use an elliptical test so
+          // clicks still land on the visible silhouette.
+          const rx = (sprite.r || Math.max(sprite.w, sprite.h) / 2) * sx;
+          const ry = (sprite.r || Math.max(sprite.w, sprite.h) / 2) * sy;
+          if (rx > 0 && ry > 0 && ((lx * lx) / (rx * rx) + (ly * ly) / (ry * ry)) <= 1) return entity;
         }
       }
     }

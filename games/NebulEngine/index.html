@@ -8,6 +8,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
 
+  <!-- Apply persisted theme before first paint to avoid a flash. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('nebulengine.theme') || 'default';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {
+        document.documentElement.setAttribute('data-theme', 'default');
+      }
+    })();
+  </script>
+
   <!-- PixiJS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/pixi.js@7/dist/pixi.min.js"></script>
   <!-- Matter.js CDN -->
@@ -20,24 +32,71 @@
 
     <!-- Header bar -->
     <header id="engine-header">
+      <button id="btn-hamburger" class="tb-btn hamburger-btn" title="File · Audio · Theme" aria-haspopup="true" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
       <div id="logo">
         <span class="logo-nebul">NEBUL</span><span class="logo-engine">ENGINE</span>
-        <span id="engine-version">v1.0.0</span>
+        <span id="engine-version">v1.3.0</span>
       </div>
       <nav id="engine-toolbar">
         <button class="tb-btn" id="btn-play"  title="Play Scene">▶ PLAY</button>
         <button class="tb-btn" id="btn-pause" title="Pause" disabled>⏸ PAUSE</button>
         <button class="tb-btn" id="btn-stop"  title="Stop"  disabled>⏹ STOP</button>
         <div class="tb-sep"></div>
-        <button class="tb-btn" id="btn-spawn" title="Spawn Entity">＋ SPAWN</button>
-        <button class="tb-btn" id="btn-clear" title="Clear Scene">🗑 CLEAR</button>
-        <div class="tb-sep"></div>
-        <button class="tb-btn" id="btn-save-scene" title="Save scene to JSON">💾 SAVE</button>
-        <button class="tb-btn" id="btn-load-scene" title="Load scene from JSON">📂 LOAD</button>
-        <div class="tb-sep"></div>
-        <button class="tb-btn" id="btn-mute" title="Mute Audio">🔊 AUDIO</button>
+        <div class="tb-group" id="tool-group">
+          <button class="tb-btn tb-tool active" id="btn-tool-move"   data-tool="move"   title="Move Tool (Q)">✥ MOVE</button>
+          <button class="tb-btn tb-tool"        id="btn-tool-rotate" data-tool="rotate" title="Rotate Tool (W)">↻ ROTATE</button>
+          <button class="tb-btn tb-tool"        id="btn-tool-scale"  data-tool="scale"  title="Scale Tool (E)">⇲ SCALE</button>
+        </div>
       </nav>
       <div id="fps-counter">FPS: <span id="fps-value">0</span></div>
+
+      <!-- Hamburger dropdown panel (hidden by default) -->
+      <div id="hamburger-menu" class="hamburger-menu" role="menu" aria-hidden="true">
+        <!-- Export: saves the scene to a .json file -->
+        <button class="hm-item" id="btn-save-scene" title="Export scene to JSON">
+          <span class="hm-icon">⤓</span><span class="hm-label">Export</span>
+        </button>
+        <!-- Load: opens a .json file picker -->
+        <button class="hm-item" id="btn-load-scene" title="Load scene from JSON">
+          <span class="hm-icon">📂</span><span class="hm-label">Load</span>
+        </button>
+        <div class="hm-sep"></div>
+        <!-- Audio: toggles mute/unmute -->
+        <button class="hm-item" id="btn-mute" title="Enable / disable audio">
+          <span class="hm-icon">🔊</span><span class="hm-label">Audio</span>
+          <span class="hm-state" id="hm-audio-state">ON</span>
+        </button>
+        <!-- Theme: dropdown -->
+        <label class="hm-item hm-select-row" title="Color theme">
+          <span class="hm-icon">🎨</span><span class="hm-label">Theme</span>
+          <select class="tb-select" id="sel-theme">
+            <option value="default" selected>Default</option>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+        <div class="hm-sep"></div>
+        <!-- Grid: toggle visibility -->
+        <button class="hm-item" id="btn-grid-toggle" title="Toggle grid visibility (G)">
+          <span class="hm-icon">▦</span><span class="hm-label">Grid</span>
+        </button>
+        <!-- Snap: snap objects to grid when repositioning -->
+        <label class="hm-item hm-select-row" title="Snap objects to grid when repositioning">
+          <span class="hm-icon">⇲</span><span class="hm-label">Snap</span>
+          <select class="tb-select" id="sel-grid-snap">
+            <option value="0">OFF</option>
+            <option value="10">10 px</option>
+            <option value="20" selected>20 px</option>
+            <option value="40">40 px</option>
+            <option value="80">80 px</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Hierarchy context menu (hidden by default; positioned at cursor) -->
+      <div id="hier-ctx-menu" class="ctx-menu" role="menu" aria-hidden="true"></div>
     </header>
 
     <!-- Main workspace -->
@@ -89,11 +148,7 @@
           <div id="workspace-controls">
             <div id="script-list" class="script-list"></div>
           </div>
-          <div id="script-tabs-bar" class="script-tabs-bar"></div>
-          <div id="script-tabs-container" class="script-tabs-container">
-            <textarea id="script-editor" class="script-tab-content active" spellcheck="false"></textarea>
-          </div>
-          <div id="workspace-status">Drag a script onto the inspector to assign it.</div>
+          <div id="workspace-status">Double-click a script to edit it. Drag a script onto the inspector to assign it.</div>
         </section>
 
         <!-- Console -->
@@ -113,6 +168,9 @@
     </div>
 
   </div>
+
+  <!-- Floating script editor windows mount here -->
+  <div id="script-windows-layer"></div>
 
   <!-- Engine Source -->
   <script type="module" src="src/core/Engine.js"></script>
