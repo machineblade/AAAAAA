@@ -39,6 +39,11 @@
             "title": "Sloped",
             "folder": "sloped",
             "description": "sloped game :D"
+        },
+        {
+            "title": "fly away with me",
+            "folder": "fly",
+            "description": "fly use shift to go fast :)"
         }
     ]
 }
