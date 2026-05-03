@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,12 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="icon" type="image/png" href="/favicon.png">
-    <link
-        href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
 
     <!-- NAV -->
@@ -108,7 +104,8 @@
     <div class="modal-overlay" id="gameModal" role="dialog" aria-modal="true" aria-label="Game player">
         <div class="modal game-modal-box" id="gameModalBox">
             <button class="modal-close" id="gameClose" aria-label="Close">&#x2715;</button>
-            <iframe id="gameFrame" title="Game" loading="lazy" allow="autoplay; camera; microphone"></iframe>
+            <button id="gameFullscreen" class="game-fullscreen-btn" type="button" aria-label="Fullscreen">⤢</button>
+            <iframe id="gameFrame" title="Game" loading="lazy" allow="autoplay; camera; microphone" allowfullscreen></iframe>
         </div>
     </div>
 
@@ -125,5 +122,4 @@
 
     <script src="script.js" type="module"></script>
 </body>
-
 </html>

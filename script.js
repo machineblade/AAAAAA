@@ -19,6 +19,7 @@ const modalTitle = document.getElementById('modalTitle');
 const gameModal = document.getElementById('gameModal');
 const gameModalBox = document.getElementById('gameModalBox');
 const gameClose = document.getElementById('gameClose');
+const gameFullscreen = document.getElementById('gameFullscreen');
 const gameFrame = document.getElementById('gameFrame');
 
 const debugOverlay = document.getElementById('debugOverlay');
@@ -38,7 +39,6 @@ hamburger.addEventListener('click', () => {
     mobileMenu.classList.toggle('open');
 });
 
-// Close mobile menu when a link is clicked
 mobileMenu.querySelectorAll('a').forEach(a => {
     a.addEventListener('click', () => {
         hamburger.classList.remove('open');
@@ -67,9 +67,6 @@ function observeReveals() {
 observeReveals();
 
 // ─── THUMBNAIL CAPTURE ────────────────────────────────────────────────────────
-// Attempts to grab first frame from a video via canvas.
-// Requires the server to send CORS headers (Access-Control-Allow-Origin: *)
-// on the video files — add a vercel.json if needed.
 function captureFirstFrame(src) {
     return new Promise((resolve, reject) => {
         const video = document.createElement('video');
@@ -98,7 +95,10 @@ function captureFirstFrame(src) {
             }
         }, { once: true });
 
-        video.addEventListener('error', () => { cleanup(); reject(new Error(`Cannot load ${src}`)); }, { once: true });
+        video.addEventListener('error', () => {
+            cleanup();
+            reject(new Error(`Cannot load ${src}`));
+        }, { once: true });
 
         video.src = src;
         video.load();
@@ -130,7 +130,6 @@ async function loadVideos() {
         videosGrid.innerHTML = '';
 
         for (const item of items) {
-            // Build card immediately with placeholder
             const card = document.createElement('div');
             card.className = 'video-card reveal';
             card.dataset.src = item.src;
@@ -145,10 +144,8 @@ async function loadVideos() {
             videosGrid.appendChild(card);
             revealObserver.observe(card);
 
-            // Click to open modal
             card.addEventListener('click', () => openVideoModal(item.src, item.title));
 
-            // Try to load thumbnail asynchronously — won't block rendering
             captureFirstFrame(item.src)
                 .then(dataUrl => {
                     const thumb = card.querySelector('.video-thumb');
@@ -162,7 +159,6 @@ async function loadVideos() {
 
         log.videosLoaded = items.length;
         if (debugOpen) renderDebug();
-
     } catch (err) {
         console.error(err);
         log.errors.push(String(err.message || err));
@@ -183,7 +179,6 @@ async function loadGames() {
 
         log.gameNames = games.map(g => g.title || g.folder || '?');
 
-        // Render featured
         if (featured) {
             featuredGameUrl = `/games/${featured.folder}/index.html`;
             featuredTitle.textContent = featured.title || 'Featured Game';
@@ -193,7 +188,6 @@ async function loadGames() {
             featuredCard.addEventListener('click', () => openGameModal(featuredGameUrl));
         }
 
-        // Render game cards
         if (!games.length) {
             gamesGrid.innerHTML = '<p class="empty-msg">No games found.</p>';
             return;
@@ -219,7 +213,6 @@ async function loadGames() {
 
         log.gamesLoaded = games.length;
         if (debugOpen) renderDebug();
-
     } catch (err) {
         console.error(err);
         log.errors.push(String(err.message || err));
@@ -257,13 +250,35 @@ function openGameModal(url) {
 }
 
 function closeGameModal() {
+    if (document.fullscreenElement) {
+        document.exitFullscreen?.();
+    }
     gameModal.classList.remove('open');
     setTimeout(() => { gameFrame.src = ''; }, 260);
     if (debugOpen) renderDebug();
 }
 
+function toggleGameFullscreen() {
+    if (!document.fullscreenElement) {
+        gameModalBox.requestFullscreen?.();
+    } else {
+        document.exitFullscreen?.();
+    }
+}
+
 gameClose.addEventListener('click', closeGameModal);
 gameModal.addEventListener('click', e => { if (e.target === gameModal) closeGameModal(); });
+
+gameFullscreen.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleGameFullscreen();
+});
+
+document.addEventListener('fullscreenchange', () => {
+    if (!gameFullscreen) return;
+    gameFullscreen.textContent = document.fullscreenElement ? '⤡' : '⤢';
+    gameFullscreen.setAttribute('aria-label', document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen');
+});
 
 // ─── DEBUG ────────────────────────────────────────────────────────────────────
 function renderDebug() {
@@ -284,20 +299,40 @@ function renderDebug() {
     debugContent.textContent = lines.join('\n');
 }
 
-function openDebug() { debugOpen = true; debugOverlay.classList.add('open'); renderDebug(); }
-function closeDebug() { debugOpen = false; debugOverlay.classList.remove('open'); }
-function toggleDebug(e) { e?.preventDefault(); debugOpen ? closeDebug() : openDebug(); }
+function openDebug() {
+    debugOpen = true;
+    debugOverlay.classList.add('open');
+    renderDebug();
+}
+
+function closeDebug() {
+    debugOpen = false;
+    debugOverlay.classList.remove('open');
+}
+
+function toggleDebug(e) {
+    e?.preventDefault();
+    debugOpen ? closeDebug() : openDebug();
+}
 
 debugToggle.addEventListener('click', toggleDebug);
 debugToggleMob.addEventListener('click', toggleDebug);
 debugClose.addEventListener('click', closeDebug);
-debugOverlay.addEventListener('click', e => { if (e.target === debugOverlay) closeDebug(); });
+debugOverlay.addEventListener('click', e => {
+    if (e.target === debugOverlay) closeDebug();
+});
 
-window.addEventListener('resize', () => { if (debugOpen) renderDebug(); }, { passive: true });
+window.addEventListener('resize', () => {
+    if (debugOpen) renderDebug();
+}, { passive: true });
 
 // ─── KEYBOARD ─────────────────────────────────────────────────────────────────
 window.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeVideoModal(); closeGameModal(); closeDebug(); }
+    if (e.key === 'Escape') {
+        closeVideoModal();
+        closeGameModal();
+        closeDebug();
+    }
 });
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
