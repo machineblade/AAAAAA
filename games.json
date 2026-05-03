@@ -43,7 +43,12 @@
         {
             "title": "fly away with me",
             "folder": "fly",
-            "description": "fly use shift to go fast :)"
+            "description": "click to enable music"
+        },
+        {
+            "title": "flappy bird",
+            "folder": "flappybird",
+            "description": "flappin birdies"
         }
     ]
 }
