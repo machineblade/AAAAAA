@@ -44,11 +44,6 @@
             "title": "fly away with me",
             "folder": "fly",
             "description": "click to enable music"
-        },
-        {
-            "title": "geometry dash level browser",
-            "folder": "gdbrowser",
-            "description": "browse gd"
         }
     ]
 }
