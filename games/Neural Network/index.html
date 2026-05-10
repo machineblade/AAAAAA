@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Snake Neural Network</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        background: #080810;
+        color: #ddd;
+        font-family: 'Courier New', monospace;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      #top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 16px;
+        background: #0f0f1a;
+        border-bottom: 1px solid #1c1c30;
+        flex-shrink: 0;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      #top-bar h1 {
+        font-size: 13px;
+        font-weight: bold;
+        color: #7c6ff7;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      #stats { display: flex; gap: 18px; font-size: 12px; color: #666; align-items: center; }
+      #stats b { color: #c0b8ff; }
+
+      #prox-wrap {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: #0d0d20;
+        border: 1px solid #1c1c30;
+        border-radius: 4px;
+        padding: 2px 8px;
+      }
+      #prox-wrap .prox-label { color: #444; font-size: 11px; }
+      #s-prox {
+        font-size: 12px;
+        font-weight: bold;
+        color: #4dff8a;
+        min-width: 38px;
+        text-align: right;
+        transition: color 0.2s;
+      }
+
+      #controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      button {
+        background: #13132a;
+        border: 1px solid #28285a;
+        color: #aaa;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-family: 'Courier New', monospace;
+        cursor: pointer;
+        border-radius: 3px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: background 0.1s, color 0.1s;
+      }
+      button:hover { background: #22224a; color: #fff; border-color: #7c6ff7; }
+      button.active { background: #7c6ff7; color: #fff; border-color: #7c6ff7; }
+
+      /* Human button glows green when active */
+      #btn-human.active { background: #1a4a2a; color: #4dff8a; border-color: #4dff8a; }
+      #btn-human.active:hover { background: #1f5c33; }
+
+      label { font-size: 11px; color: #666; }
+      input[type=range] { width: 80px; accent-color: #7c6ff7; vertical-align: middle; }
+      #speed-val { font-size: 11px; color: #888; min-width: 20px; display: inline-block; }
+
+      #main { display: flex; flex: 1; overflow: hidden; }
+
+      #game-panel {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        background: #080810;
+        min-width: 120px;
+      }
+      #game-canvas { border: 1px solid #1c1c30; border-radius: 3px; display: block; }
+
+      #divider {
+        flex: 0 0 6px;
+        background: #1a1a30;
+        cursor: col-resize;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.1s;
+        user-select: none;
+        position: relative;
+        z-index: 10;
+      }
+      #divider:hover, #divider.dragging { background: #7c6ff7; }
+      #divider::after {
+        content: '';
+        width: 2px;
+        height: 32px;
+        background: #333355;
+        border-radius: 2px;
+      }
+      #divider:hover::after, #divider.dragging::after { background: #fff; }
+
+      #nn-panel {
+        flex: 1;
+        min-width: 0;
+        background: #0b0b16;
+        border-left: 1px solid #1c1c30;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #nn-header {
+        padding: 6px 14px;
+        font-size: 10px;
+        color: #444;
+        border-bottom: 1px solid #1c1c30;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        display: flex;
+        justify-content: space-between;
+      }
+      #nn-legend {
+        font-size: 10px;
+        display: flex;
+        gap: 10px;
+        color: #555;
+        align-items: center;
+      }
+      .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 3px; vertical-align: middle; }
+      #nn-canvas-wrap { flex: 1; overflow: hidden; position: relative; }
+      canvas#nn-canvas { display: block; }
+
+      #gen-bar {
+        padding: 5px 14px;
+        font-size: 10px;
+        color: #3a3a5a;
+        background: #0b0b16;
+        border-top: 1px solid #1c1c30;
+        height: 24px;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="top-bar">
+      <h1>🐍 Snake NN</h1>
+      <div id="stats">
+        <div>Gen&nbsp;<b id="s-gen">0</b></div>
+        <div>Score&nbsp;<b id="s-score">0</b></div>
+        <div>Best&nbsp;<b id="s-best">0</b></div>
+        <div>Alive&nbsp;<b id="s-alive">0</b></div>
+        <div>Steps&nbsp;<b id="s-steps">0</b></div>
+        <div id="prox-wrap" title="Virtual proximity score: +pts for moving toward food, −pts for moving away or idling">
+          <span class="prox-label">📍 Prox</span>
+          <b id="s-prox">+0</b>
+        </div>
+      </div>
+      <div id="controls">
+        <label>Speed
+          <input type="range" id="speed-slider" min="1" max="100" value="30">
+          <span id="speed-val">8</span>
+        </label>
+        <button id="btn-run">▶ Run</button>
+        <button id="btn-pause">⏸ Pause</button>
+        <button id="btn-best">👁 Best</button>
+        <button id="btn-human">🎮 Play</button>
+        <button id="btn-save">💾 Save</button>
+        <button id="btn-load">📂 Load</button>
+        <button id="btn-restart">↺ Restart</button>
+      </div>
+    </div>
+
+    <div id="main">
+      <div id="game-panel">
+        <canvas id="game-canvas"></canvas>
+      </div>
+      <div id="divider" title="Drag to resize"></div>
+      <div id="nn-panel">
+        <div id="nn-header">
+          <span>Neural Network — Live Activations  [32→32→32→3]</span>
+          <div id="nn-legend">
+            <span><span class="dot" style="background:#5af"></span>active</span>
+            <span><span class="dot" style="background:#f55"></span>inhibited</span>
+            <span><span class="dot" style="background:#7c6ff7"></span>output</span>
+          </div>
+        </div>
+        <div id="nn-canvas-wrap">
+          <canvas id="nn-canvas"></canvas>
+        </div>
+        <div id="gen-bar">Initializing...</div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -44,6 +44,11 @@
             "title": "fly away with me",
             "folder": "fly",
             "description": "click to enable music"
+        },
+        {
+            "title": "watch a snake fail",
+            "folder": "Neural Network",
+            "description": "AI is so advanced"
         }
     ]
 }
