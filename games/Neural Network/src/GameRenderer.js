@@ -2,7 +2,7 @@
 // Renders a SnakeGame onto a PixiJS Application.
 // Supports live resize — call resize(availablePx) whenever the panel changes size.
 
-import * as PIXI from "https://jsdelivr.net";
+import * as PIXI from "https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.13.2/pixi.min.js";
 import { GRID, DIRS } from './Snake.js';
 
 const GAP        = 1;     // gap between cells (px)
