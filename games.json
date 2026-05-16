@@ -49,6 +49,11 @@
             "title": "watch a snake fail",
             "folder": "Neural Network",
             "description": "AI is so advanced"
+        },
+        {
+            "title": "Fractals",
+            "folder": "fractals",
+            "description": "advanced"
         }
     ]
 }
