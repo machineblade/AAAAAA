@@ -1,9 +1,4 @@
 {
-    "featured":{
-        "title": "Multiplayer Snake",
-        "folder": "multiplayersnake",
-        "description": "advanceded"
-    },
     "games": [
         {
             "title": "Triangle Championship",
