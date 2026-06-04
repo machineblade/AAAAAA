@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Sort → Obama (GPU)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #0d0d0d;
+            color: #ddd;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            gap: 16px;
+            padding: 28px 16px;
+        }
+
+        h1 {
+            font-size: 15px;
+            font-weight: 400;
+            color: #888;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        #canvases {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .canvas-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .canvas-label {
+            font-size: 10px;
+            color: #444;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        canvas {
+            border: 1px solid #1e1e1e;
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        #controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button,
+        .file-label {
+            padding: 7px 18px;
+            background: transparent;
+            border: 1px solid #333;
+            color: #999;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: inherit;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: background 0.1s, border-color 0.1s, color 0.1s;
+        }
+
+        button:hover,
+        .file-label:hover {
+            background: #181818;
+            border-color: #666;
+            color: #ddd;
+        }
+
+        button:disabled {
+            opacity: 0.25;
+            cursor: default;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        #progress-bar-wrap {
+            width: 500px;
+            max-width: 92vw;
+            height: 2px;
+            background: #1a1a1a;
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #3a7fff;
+            border-radius: 1px;
+            transition: width 0.06s linear;
+        }
+
+        #status {
+            font-size: 11px;
+            color: #444;
+            min-height: 15px;
+            letter-spacing: 0.06em;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        #gpu-badge {
+            font-size: 10px;
+            padding: 3px 10px;
+            border: 1px solid #1e3a1e;
+            color: #3a7a3a;
+            border-radius: 3px;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>pixel sort → obama</h1>
+
+    <div id="controls">
+        <label class="file-label" for="fileInput">upload image</label>
+        <input type="file" id="fileInput" accept="image/*">
+        <button id="startBtn" disabled>animate</button>
+        <button id="resetBtn" disabled>reset</button>
+        <button id="downloadBtn" disabled>download</button>
+        <span id="gpu-badge">GPU</span>
+    </div>
+
+    <div id="canvases">
+        <div class="canvas-wrap">
+            <span class="canvas-label">source</span>
+            <canvas id="srcCanvas"></canvas>
+        </div>
+        <div class="canvas-wrap">
+            <span class="canvas-label">animating</span>
+            <canvas id="animCanvas"></canvas>
+        </div>
+        <div class="canvas-wrap">
+            <span class="canvas-label">target</span>
+            <canvas id="dstCanvas"></canvas>
+        </div>
+    </div>
+
+    <div id="progress-bar-wrap">
+        <div id="progress-bar"></div>
+    </div>
+    <div id="status">checking WebGPU support...</div>
+
+    <script>
+        // ─── Config ────────────────────────────────────────────────────────────────
+        const OBAMA_URL = './obama.jpg';
+        const GRID = 256;          // pixel grid (256×256 = 65536 pixels — good GPU workload)
+        const DISPLAY = 512;       // display canvas size
+        const PX = DISPLAY / GRID; // 2px per cell
+
+        const srcCanvas = document.getElementById('srcCanvas');
+        const animCanvas = document.getElementById('animCanvas');
+        const dstCanvas = document.getElementById('dstCanvas');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const statusEl = document.getElementById('status');
+        const progressBar = document.getElementById('progress-bar');
+        const fileInput = document.getElementById('fileInput');
+        const gpuBadge = document.getElementById('gpu-badge');
+
+        [srcCanvas, animCanvas, dstCanvas].forEach(c => {
+            c.width = DISPLAY; c.height = DISPLAY;
+        });
+
+        let gpu = null; // WebGPU device
+        let srcPixels = null;   // Uint8Array [r,g,b,...] n*3
+        let dstPixels = null;
+        let pixelMapping = null; // Int32Array length n
+        let animFrame = null;
+        let animating = false;
+        let srcImageData = null;
+
+        // ─── WebGPU init ───────────────────────────────────────────────────────────
+        async function initGPU() {
+            if (!navigator.gpu) throw new Error('WebGPU not supported');
+            const adapter = await navigator.gpu.requestAdapter();
+            if (!adapter) throw new Error('No GPU adapter found');
+            return await adapter.requestDevice();
+        }
+
+        // ─── Image helpers ─────────────────────────────────────────────────────────
+        function sampleImageToGrid(img) {
+            const tmp = document.createElement('canvas');
+            tmp.width = GRID; tmp.height = GRID;
+            tmp.getContext('2d').drawImage(img, 0, 0, GRID, GRID);
+            const d = tmp.getContext('2d').getImageData(0, 0, GRID, GRID).data;
+            const n = GRID * GRID;
+            const out = new Uint8Array(n * 3);
+            for (let i = 0; i < n; i++) {
+                out[i * 3] = d[i * 4]; out[i * 3 + 1] = d[i * 4 + 1]; out[i * 3 + 2] = d[i * 4 + 2];
+            }
+            return out;
+        }
+
+        function renderPixels(canvas, pixels) {
+            const ctx = canvas.getContext('2d');
+            const idata = ctx.createImageData(DISPLAY, DISPLAY);
+            const n = GRID * GRID;
+            for (let i = 0; i < n; i++) {
+                const gx = i % GRID, gy = (i / GRID) | 0;
+                const r = pixels[i * 3], g = pixels[i * 3 + 1], b = pixels[i * 3 + 2];
+                for (let py = 0; py < PX; py++) {
+                    for (let px = 0; px < PX; px++) {
+                        const pi = ((gy * PX + py) * DISPLAY + gx * PX + px) * 4;
+                        idata.data[pi] = r; idata.data[pi + 1] = g;
+                        idata.data[pi + 2] = b; idata.data[pi + 3] = 255;
+                    }
+                }
+            }
+            ctx.putImageData(idata, 0, 0);
+            return idata;
+        }
+
+    // ─── GPU matching via subtraction/removal ───────────────────────────────────
+    // ─── GPU matching via Best-Fit Selection (Rearrange + Remove) ────────────────
+    async function buildMappingGPU(device, srcPix, dstPix) {
+        const n = GRID * GRID;
+
+        // Normalize colors for better distance matching
+        const srcF32 = new Float32Array(n * 4);
+        const dstF32 = new Float32Array(n * 4);
+        for (let i = 0; i < n; i++) {
+            srcF32[i * 4] = srcPix[i * 3] / 255.0;
+            srcF32[i * 4 + 1] = srcPix[i * 3 + 1] / 255.0;
+            srcF32[i * 4 + 2] = srcPix[i * 3 + 2] / 255.0;
+            dstF32[i * 4] = dstPix[i * 3] / 255.0;
+            dstF32[i * 4 + 1] = dstPix[i * 3 + 1] / 255.0;
+            dstF32[i * 4 + 2] = dstPix[i * 3 + 2] / 255.0;
+        }
+
+        const srcBuf = makeBuffer(device, srcF32, GPUBufferUsage.STORAGE);
+        const dstBuf = makeBuffer(device, dstF32, GPUBufferUsage.STORAGE);
+
+        // Result mapping: which source pixel index goes to this destination index
+        const mappingBuf = makeBuffer(device, new Int32Array(n).fill(-1),
+            GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST);
+
+        // Track "Usage" - once a source pixel is claimed, its cost spikes to infinity
+        const usageCostBuf = makeBuffer(device, new Float32Array(n).fill(0),
+            GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST);
+
+        const uniformBuf = makeBuffer(device, new Uint32Array([n]), GPUBufferUsage.UNIFORM);
+
+        const shader = /* wgsl */`
+        struct Pixel { r: f32, g: f32, b: f32, a: f32 }
+        @group(0) @binding(0) var<storage, read> src : array<Pixel>;
+        @group(0) @binding(1) var<storage, read> dst : array<Pixel>;
+        @group(0) @binding(2) var<storage, read_write> mapping : array<i32>;
+        @group(0) @binding(3) var<storage, read_write> usage_costs : array<f32>;
+        @group(0) @binding(4) var<uniform> n : u32;
+
+        @compute @workgroup_size(64)
+        fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+            let di = i32(gid.x);
+            if (di >= i32(n)) { return; }
+
+            let target_color = dst[di];
+            var best_score = 1e30;
+            var best_si = -1;
+
+            // Find the closest color that hasn't been "removed" (claimed) yet
+            for (var si: i32 = 0; si < i32(n); si++) {
+                let s_pix = src[si];
+                let diff = vec3(target_color.r - s_pix.r, target_color.g - s_pix.g, target_color.b - s_pix.b);
+                
+                // score = color distance + huge penalty if already taken
+                let score = dot(diff, diff) + usage_costs[si];
+                
+                if (score < best_score) {
+                    best_score = score;
+                    best_si = si;
+                }
+            }
+
+            // "Remove" this pixel from the pool for subsequent destination pixels
+            usage_costs[best_si] = 1e10; 
+            mapping[di] = best_si;
+        }
+    `;
+
+        const module = device.createShaderModule({ code: shader });
+        const pipeline = await device.createComputePipelineAsync({
+            layout: 'auto', compute: { module, entryPoint: 'main' }
+        });
+
+        const bindGroup = device.createBindGroup({
+            layout: pipeline.getBindGroupLayout(0),
+            entries: [
+                { binding: 0, resource: { buffer: srcBuf } },
+                { binding: 1, resource: { buffer: dstBuf } },
+                { binding: 2, resource: { buffer: mappingBuf } },
+                { binding: 3, resource: { buffer: usageCostBuf } },
+                { binding: 4, resource: { buffer: uniformBuf } },
+            ]
+        });
+
+        // Run the compute pass
+        const encoder = device.createCommandEncoder();
+        const pass = encoder.beginComputePass();
+        pass.setPipeline(pipeline);
+        pass.setBindGroup(0, bindGroup);
+        pass.dispatchWorkgroups(Math.ceil(n / 64));
+        pass.end();
+        device.queue.submit([encoder.finish()]);
+
+        // Download results
+        const readBuf = device.createBuffer({ size: n * 4, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+        const encRead = device.createCommandEncoder();
+        encRead.copyBufferToBuffer(mappingBuf, 0, readBuf, 0, n * 4);
+        device.queue.submit([encRead.finish()]);
+        await readBuf.mapAsync(GPUMapMode.READ);
+        const result = new Int32Array(readBuf.getMappedRange().slice(0));
+        readBuf.unmap();
+
+        return result;
+    }   function finalizeRearrangement(mapping, n) {
+            const usedSrc = new Uint8Array(n);
+            const unmatchedDst = [];
+
+            // Identify which source pixels were actually assigned
+            for (let i = 0; i < n; i++) {
+                if (mapping[i] !== -1) {
+                    if (usedSrc[mapping[i]]) {
+                        mapping[i] = -1; // Remove duplicate assignments
+                        unmatchedDst.push(i);
+                    } else {
+                        usedSrc[mapping[i]] = 1;
+                    }
+                } else {
+                    unmatchedDst.push(i);
+                }
+            }
+
+            // Find all unassigned source pixels
+            const availableSrc = [];
+            for (let i = 0; i < n; i++) {
+                if (!usedSrc[i]) availableSrc.push(i);
+            }
+
+            // Fill the gaps to guarantee every source pixel is used exactly once
+            for (let i = 0; i < unmatchedDst.length; i++) {
+                mapping[unmatchedDst[i]] = availableSrc[i];
+            }
+
+            return mapping;
+        }
+        function makeBuffer(device, data, usage) {
+            const buf = device.createBuffer({ size: data.byteLength, usage: usage | GPUBufferUsage.COPY_DST });
+            device.queue.writeBuffer(buf, 0, data);
+            return buf;
+        }
+
+    // ─── CPU Fallback (Greedy Removal) ──────────────────────────────────────────
+    // ─── CPU Fallback (Greedy Rearrange + Remove) ───────────────────────────────
+        function buildMappingCPU(srcPix, dstPix) {
+            const n = GRID * GRID;
+            const mapping = new Int32Array(n);
+            const removed = new Uint8Array(n); // Tracks "removed" source pixels
+
+            for (let i = 0; i < n; i++) {
+                let bestDist = Infinity;
+                let bestSi = -1;
+
+                const dr = dstPix[i * 3], dg = dstPix[i * 3 + 1], db = dstPix[i * 3 + 2];
+
+                for (let si = 0; si < n; si++) {
+                    if (removed[si]) continue; // Skip pixels already "removed" from the pool
+
+                    const rD = dr - srcPix[si * 3];
+                    const gD = dg - srcPix[si * 3 + 1];
+                    const bD = db - srcPix[si * 3 + 2];
+                    const dist = rD * rD + gD * gD + bD * bD;
+
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        bestSi = si;
+                    }
+                }
+
+                mapping[i] = bestSi;
+                removed[bestSi] = 1; // Mark as removed/used
+            }
+            return mapping;
+        }
+        async function loadImage(src, crossOrigin) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                if (crossOrigin) img.crossOrigin = 'anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+
+        // ─── Setup ─────────────────────────────────────────────────────────────────
+        (async () => {
+            try {
+                gpu = await initGPU();
+                statusEl.textContent = 'WebGPU ready — upload an image';
+                gpuBadge.style.color = '#3a7a3a';
+                gpuBadge.style.borderColor = '#1e3a1e';
+                gpuBadge.textContent = 'GPU ✓';
+            } catch (e) {
+                statusEl.textContent = `WebGPU unavailable (${e.message}) — will use CPU fallback`;
+                gpuBadge.style.color = '#7a4a3a';
+                gpuBadge.style.borderColor = '#3a1e1e';
+                gpuBadge.textContent = 'CPU fallback';
+            }
+        })();
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            startBtn.disabled = true;
+            resetBtn.disabled = true;
+            if (animating) { cancelAnimationFrame(animFrame); animating = false; }
+            progressBar.style.width = '0%';
+            statusEl.textContent = 'loading images...';
+
+            let obamaImg, userImg;
+            try {
+                const userURL = URL.createObjectURL(file);
+                [obamaImg, userImg] = await Promise.all([
+                    loadImage(OBAMA_URL, true),
+                    loadImage(userURL, false)
+                ]);
+                URL.revokeObjectURL(userURL);
+            } catch (err) {
+                statusEl.textContent = 'error loading images.';
+                return;
+            }
+
+            srcPixels = sampleImageToGrid(userImg);
+            dstPixels = sampleImageToGrid(obamaImg);
+
+            srcImageData = renderPixels(srcCanvas, srcPixels);
+            renderPixels(dstCanvas, dstPixels);
+            renderPixels(animCanvas, srcPixels);
+
+            try {
+                if (!gpu) throw new Error('no gpu');
+                pixelMapping = await buildMappingGPU(gpu, srcPixels, dstPixels);
+            } catch (e) {
+                statusEl.textContent = 'GPU matching failed, using CPU fallback...';
+                await new Promise(r => setTimeout(r, 50));
+                pixelMapping = buildMappingCPU(srcPixels, dstPixels);
+            }
+
+            progressBar.style.width = '100%';
+            statusEl.textContent = 'matched! press animate.';
+            startBtn.disabled = false;
+            resetBtn.disabled = false;
+        });
+
+        startBtn.addEventListener('click', () => {
+                if (!pixelMapping) return;
+                animating = true;
+                startBtn.disabled = true;
+                resetBtn.disabled = true;
+                downloadBtn.disabled = true; // Disable while animating
+
+                const animCtx = animCanvas.getContext('2d');
+                animCtx.putImageData(srcImageData, 0, 0);
+
+                const n = GRID * GRID;
+                const order = new Int32Array(n);
+                for (let i = 0; i < n; i++) order[i] = i;
+                for (let i = n - 1; i > 0; i--) {
+                    const j = (Math.random() * (i + 1)) | 0;
+                    const t = order[i]; order[i] = order[j]; order[j] = t;
+                }
+
+                const animIData = animCtx.createImageData(DISPLAY, DISPLAY);
+                animIData.data.set(srcImageData.data);
+
+                const BATCH = 400;
+                let done = 0;
+
+                function step() {
+                    if (!animating) return;
+                    const end = Math.min(done + BATCH, n);
+                    for (; done < end; done++) {
+                        const dstCell = order[done];
+                        const srcCell = pixelMapping[dstCell];
+                        const r = srcPixels[srcCell * 3], g = srcPixels[srcCell * 3 + 1], b = srcPixels[srcCell * 3 + 2];
+                        const gx = dstCell % GRID, gy = (dstCell / GRID) | 0;
+                        for (let py = 0; py < PX; py++) {
+                            for (let px2 = 0; px2 < PX; px2++) {
+                                const pi = ((gy * PX + py) * DISPLAY + gx * PX + px2) * 4;
+                                animIData.data[pi] = r; animIData.data[pi + 1] = g;
+                                animIData.data[pi + 2] = b; animIData.data[pi + 3] = 255;
+                            }
+                        }
+                    }
+                    animCtx.putImageData(animIData, 0, 0);
+                    progressBar.style.width = `${(done / n * 100).toFixed(1)}%`;
+
+                    if (done < n) {
+                        statusEl.textContent = `animating... ${Math.round(done / n * 100)}%`;
+                        animFrame = requestAnimationFrame(step);
+                    } else {
+                        statusEl.textContent = 'done.';
+                        animating = false;
+                        resetBtn.disabled = false;
+                        downloadBtn.disabled = false; // <--- ENABLE DOWNLOAD HERE
+                    }
+                }
+                animFrame = requestAnimationFrame(step);
+            });
+
+            // ─── Download Logic ────────────────────────────────────────────────────────
+            downloadBtn.addEventListener('click', () => {
+                const link = document.createElement('a');
+                link.download = 'obama-pixel-result.png';
+                // Capture the current state of the animation canvas
+                link.href = animCanvas.toDataURL('image/png');
+                link.click();
+            });
+
+            resetBtn.addEventListener('click', () => {
+                if (animating) { cancelAnimationFrame(animFrame); animating = false; }
+                if (srcImageData) {
+                    animCanvas.getContext('2d').putImageData(srcImageData, 0, 0);
+                    progressBar.style.width = '100%';
+                    statusEl.textContent = 'reset. press animate again.';
+                    startBtn.disabled = false;
+                    downloadBtn.disabled = true; // Disable download on reset
+                }
+            });
+    </script>
+</body>
+
+</html>

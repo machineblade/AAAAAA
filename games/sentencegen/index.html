@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sentence Creator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #000000;
+  --surface: #0f0f0f;
+  --border: #2a2a2a;
+
+  --text: #ffffff;
+  --muted: #b5b5b5;
+
+  --adj: #111111;
+  --adj-text: #ffffff;
+
+  --noun: #111111;
+  --noun-text: #ffffff;
+
+  --verb: #111111;
+  --verb-text: #ffffff;
+
+  --leadIn: #111111;
+  --leadIn-text: #ffffff;
+
+  --leadOut: #111111;
+  --leadOut-text: #ffffff;
+}
+
+  html, body {
+    height: 100%;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  .sep {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px;
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  .sep-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .sep-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  #panel-top {
+    padding: 20px 24px;
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  .word-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border-radius: 9999px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: grab;
+    user-select: none;
+    border: 1.5px solid transparent;
+    transition: transform 0.12s, opacity 0.12s;
+  }
+
+  .chip:active { cursor: grabbing; }
+  .chip.dragging {
+    opacity: 0.35;
+    transform: scale(0.96);
+  }
+
+  .chip[data-type="Adjective"] { background: var(--adj); color: var(--adj-text); border-color: #bfdbfe; }
+  .chip[data-type="Verb"] { background: var(--verb); color: var(--verb-text); border-color: #fbcfe8; }
+  .chip[data-type="Noun"] { background: var(--noun); color: var(--noun-text); border-color: #bbf7d0; }
+  .chip[data-type="LeadIn"] { background: var(--leadIn); color: var(--leadIn-text); border-color: #f5b7b1; }
+  .chip[data-type="LeadOut"] { background: var(--leadOut); color: var(--leadOut-text); border-color: #d1d5db; }
+
+  #panel-mid {
+    flex: 1;
+    padding: 20px 24px;
+    border-bottom: 1.5px solid var(--border);
+    overflow-y: auto;
+  }
+
+  #drop-zone {
+    min-height: 80px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    align-content: flex-start;
+    padding: 16px;
+    border: 1.5px dashed var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+  }
+
+  #drop-zone.drag-over {
+    background: #f0f9ff;
+    border-color: #7dd3fc;
+  }
+
+  .drop-placeholder {
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+    pointer-events: none;
+  }
+
+  .chip.in-sentence {
+    cursor: grab;
+  }
+
+  .chip.in-sentence .remove-x {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.1);
+    font-size: 10px;
+    line-height: 1;
+    cursor: pointer;
+    margin-left: 2px;
+  }
+
+  .chip.in-sentence .remove-x:hover {
+    background: rgba(0,0,0,0.22);
+  }
+
+  #panel-bot {
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn {
+    padding: 9px 22px;
+    border-radius: 9999px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .btn:hover { background: var(--surface); }
+
+  .btn-primary {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+
+  .btn-primary:hover { background: #333; }
+
+  .console-out {
+    flex: 1;
+    padding: 8px 14px;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    min-height: 36px;
+    word-break: break-word;
+  }
+
+  .console-out span { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sep">
+    <span class="sep-label">Word Bank</span>
+    <div class="sep-line"></div>
+    <span class="sep-label">Drag words down</span>
+  </div>
+
+  <div id="panel-top">
+    <div class="word-bank" id="word-bank"></div>
+  </div>
+
+  <div class="sep">
+    <span class="sep-label">Sentence</span>
+    <div class="sep-line"></div>
+    <span class="sep-label">Result</span>
+  </div>
+
+  <div id="panel-mid">
+    <div id="drop-zone">
+      <span class="drop-placeholder">Drop words here</span>
+    </div>
+  </div>
+
+  <div class="sep">
+    <span class="sep-label">Actions</span>
+    <div class="sep-line"></div>
+  </div>
+
+  <div id="panel-bot">
+    <button class="btn" id="btn-clear">Clear</button>
+    <button class="btn btn-primary" id="btn-build">Build ↗</button>
+    <div class="console-out" id="console-out">Console output will appear here…</div>
+  </div>
+</div>
+
+<script>
+  const TYPES = [
+    "Article",
+    "Adjective",
+    "Color",
+    "Animal",
+    "Noun",
+    "PluralNoun",
+    "Verb",
+    "PastVerb",
+    "FutureVerb",
+    "VerbING",
+    "Preposition",
+    "Connector",
+    "Pronoun",
+    "LeadOut"
+  ];
+  
+  const WORDS = {
+    Article: [
+      "the", "a", "an"
+    ],
+  
+    Adjective: [
+      "quick", "lazy", "sleepy", "noisy",
+      "happy", "sad", "angry", "tiny",
+      "huge", "soft", "fluffy", "wild",
+      "crazy", "funny", "smart"
+    ],
+  
+    Color: [
+      "brown", "red", "green", "blue",
+      "purple", "black", "white", "orange"
+    ],
+  
+    Animal: [
+      "fox", "dog", "cat", "wolf",
+      "bear", "rabbit", "tiger",
+      "lion", "snake", "monkey"
+    ],
+  
+    Noun: [
+      "car", "house", "tree", "computer",
+      "restaurant", "basketball", "phone",
+      "book", "child", "teacher"
+    ],
+  
+    Verb: [
+      "jump", "walk", "run", "dance",
+      "eat", "sleep", "crawl",
+      "fight", "spin", "explode"
+    ],
+  
+    Preposition: [
+      "over", "under", "through",
+      "around", "inside", "outside",
+      "behind", "beside"
+    ],
+  
+    Connector: [
+      "and", "but", "because",
+      "while", "although", "so"
+    ],
+  
+    Pronoun: [
+      "he", "she", "they", "we", "I"
+    ],
+  
+    LeadOut: [
+      "overall", "in conclusion",
+      "somehow", "unexpectedly"
+    ]
+  };
+  
+  const wordBank = document.getElementById('word-bank');
+  const dropZone = document.getElementById('drop-zone');
+  const consoleOut = document.getElementById('console-out');
+  
+  let draggedChip = null;
+  
+  function randomFrom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+  
+  function pluralize(word) {
+    if (
+      word.endsWith("s") ||
+      word.endsWith("x") ||
+      word.endsWith("z") ||
+      word.endsWith("ch") ||
+      word.endsWith("sh")
+    ) {
+      return word + "es";
+    }
+  
+    if (word.endsWith("y")) {
+      return word.slice(0, -1) + "ies";
+    }
+  
+    return word + "s";
+  }
+  
+  function pastTense(word) {
+    if (word.endsWith("e")) {
+      return word + "d";
+    }
+  
+    if (word.endsWith("y")) {
+      return word.slice(0, -1) + "ied";
+    }
+  
+    return word + "ed";
+  }
+  
+  function ingForm(word) {
+    if (word.endsWith("e")) {
+      return word.slice(0, -1) + "ing";
+    }
+  
+    return word + "ing";
+  }
+  
+  function generateWord(type) {
+    switch (type) {
+      case "PluralNoun":
+        return pluralize(
+          randomFrom([
+            ...WORDS.Noun,
+            ...WORDS.Animal
+          ])
+        );
+  
+      case "PastVerb":
+        return pastTense(
+          randomFrom(WORDS.Verb)
+        );
+  
+      case "FutureVerb":
+        return "will " + randomFrom(WORDS.Verb);
+  
+      case "VerbING":
+        return ingForm(
+          randomFrom(WORDS.Verb)
+        );
+  
+      default:
+        return randomFrom(WORDS[type] || [type]);
+    }
+  }
+  
+  function buildSentence() {
+    const chips = [...dropZone.querySelectorAll('.chip')];
+  
+    const sentence = chips.map(chip => {
+      return generateWord(chip.dataset.type);
+    }).join(' ');
+  
+    consoleOut.innerHTML = sentence
+      ? `<span>${sentence}</span>`
+      : 'Console output will appear here…';
+  }
+  
+  function renderBank() {
+    wordBank.innerHTML = '';
+  
+    TYPES.forEach(type => {
+      const chip = document.createElement('div');
+  
+      chip.className = 'chip';
+      chip.dataset.type = type;
+      chip.textContent = type;
+      chip.draggable = true;
+  
+      chip.addEventListener('dragstart', e => {
+        draggedChip = null;
+  
+        e.dataTransfer.setData('text/plain', type);
+        chip.classList.add('dragging');
+      });
+  
+      chip.addEventListener('dragend', () => {
+        chip.classList.remove('dragging');
+      });
+  
+      wordBank.appendChild(chip);
+    });
+  }
+  
+  function makeSentenceChip(type) {
+    const chip = document.createElement('div');
+  
+    chip.className = 'chip in-sentence';
+    chip.dataset.type = type;
+    chip.textContent = type;
+    chip.draggable = true;
+  
+    const x = document.createElement('span');
+  
+    x.className = 'remove-x';
+    x.textContent = '×';
+  
+    x.addEventListener('click', e => {
+      e.stopPropagation();
+  
+      chip.remove();
+  
+      if (!dropZone.querySelector('.chip')) {
+        dropZone.innerHTML =
+          '<span class="drop-placeholder">Drop words here</span>';
+      }
+  
+      buildSentence();
+    });
+  
+    chip.appendChild(x);
+  
+    chip.addEventListener('dragstart', e => {
+      draggedChip = chip;
+  
+      e.dataTransfer.setData('text/plain', type);
+  
+      chip.classList.add('dragging');
+    });
+  
+    chip.addEventListener('dragend', () => {
+      chip.classList.remove('dragging');
+    });
+  
+    return chip;
+  }
+  
+  function getDragAfterElement(container, x) {
+    const elements = [
+      ...container.querySelectorAll('.chip:not(.dragging)')
+    ];
+  
+    return elements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+  
+      const offset = x - box.left - box.width / 2;
+  
+      if (offset < 0 && offset > closest.offset) {
+        return {
+          offset,
+          element: child
+        };
+      }
+  
+      return closest;
+    }, {
+      offset: Number.NEGATIVE_INFINITY
+    }).element;
+  }
+  
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+  
+    dropZone.classList.add('drag-over');
+  
+    const afterElement =
+      getDragAfterElement(dropZone, e.clientX);
+  
+    if (draggedChip) {
+      if (afterElement == null) {
+        dropZone.appendChild(draggedChip);
+      } else {
+        dropZone.insertBefore(
+          draggedChip,
+          afterElement
+        );
+      }
+    }
+  });
+  
+  dropZone.addEventListener('dragleave', e => {
+    if (!dropZone.contains(e.relatedTarget)) {
+      dropZone.classList.remove('drag-over');
+    }
+  });
+  
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+  
+    dropZone.classList.remove('drag-over');
+  
+    const placeholder =
+      dropZone.querySelector('.drop-placeholder');
+  
+    if (placeholder) {
+      placeholder.remove();
+    }
+  
+    if (!draggedChip) {
+      const type =
+        e.dataTransfer.getData('text/plain');
+  
+      const chip = makeSentenceChip(type);
+  
+      const afterElement =
+        getDragAfterElement(dropZone, e.clientX);
+  
+      if (afterElement == null) {
+        dropZone.appendChild(chip);
+      } else {
+        dropZone.insertBefore(chip, afterElement);
+      }
+    }
+  
+    buildSentence();
+  });
+  
+  document
+    .getElementById('btn-clear')
+    .addEventListener('click', () => {
+  
+      dropZone.innerHTML =
+        '<span class="drop-placeholder">Drop words here</span>';
+  
+      consoleOut.textContent =
+        'Console output will appear here…';
+    });
+  
+  document
+    .getElementById('btn-build')
+    .addEventListener('click', buildSentence);
+  
+  renderBank();
+  </script>
+</body>
+</html>

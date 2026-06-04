@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NebulEngine — Game Engine</title>
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+
+  <!-- Apply persisted theme before first paint to avoid a flash. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('nebulengine.theme') || 'default';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {
+        document.documentElement.setAttribute('data-theme', 'default');
+      }
+    })();
+  </script>
+
+  <!-- PixiJS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@7/dist/pixi.min.js"></script>
+  <!-- Matter.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+  <!-- HowlerJS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/howler@2.2.4/dist/howler.min.js"></script>
+</head>
+<body>
+  <div id="engine-shell">
+
+    <!-- Header bar -->
+    <header id="engine-header">
+      <button id="btn-hamburger" class="tb-btn hamburger-btn" title="File · Audio · Theme" aria-haspopup="true" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <div id="logo">
+        <span class="logo-nebul">NEBUL</span><span class="logo-engine">ENGINE</span>
+        <span id="engine-version">v1.3.0</span>
+      </div>
+      <nav id="engine-toolbar">
+        <button class="tb-btn" id="btn-play"  title="Play Scene">▶ PLAY</button>
+        <button class="tb-btn" id="btn-pause" title="Pause" disabled>⏸ PAUSE</button>
+        <button class="tb-btn" id="btn-stop"  title="Stop"  disabled>⏹ STOP</button>
+        <div class="tb-sep"></div>
+        <div class="tb-group" id="tool-group">
+          <button class="tb-btn tb-tool active" id="btn-tool-move"   data-tool="move"   title="Move Tool (Q)">✥ MOVE</button>
+          <button class="tb-btn tb-tool"        id="btn-tool-rotate" data-tool="rotate" title="Rotate Tool (W)">↻ ROTATE</button>
+          <button class="tb-btn tb-tool"        id="btn-tool-scale"  data-tool="scale"  title="Scale Tool (E)">⇲ SCALE</button>
+        </div>
+      </nav>
+      <div id="fps-counter">FPS: <span id="fps-value">0</span></div>
+
+      <!-- Hamburger dropdown panel (hidden by default) -->
+      <div id="hamburger-menu" class="hamburger-menu" role="menu" aria-hidden="true">
+        <!-- Export: saves the scene to a .json file -->
+        <button class="hm-item" id="btn-save-scene" title="Export scene to JSON">
+          <span class="hm-icon">⤓</span><span class="hm-label">Export</span>
+        </button>
+        <!-- Load: opens a .json file picker -->
+        <button class="hm-item" id="btn-load-scene" title="Load scene from JSON">
+          <span class="hm-icon">📂</span><span class="hm-label">Load</span>
+        </button>
+        <div class="hm-sep"></div>
+        <!-- Audio: toggles mute/unmute -->
+        <button class="hm-item" id="btn-mute" title="Enable / disable audio">
+          <span class="hm-icon">🔊</span><span class="hm-label">Audio</span>
+          <span class="hm-state" id="hm-audio-state">ON</span>
+        </button>
+        <!-- Theme: dropdown -->
+        <label class="hm-item hm-select-row" title="Color theme">
+          <span class="hm-icon">🎨</span><span class="hm-label">Theme</span>
+          <select class="tb-select" id="sel-theme">
+            <option value="default" selected>Default</option>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
+        <div class="hm-sep"></div>
+        <!-- Grid: toggle visibility -->
+        <button class="hm-item" id="btn-grid-toggle" title="Toggle grid visibility (G)">
+          <span class="hm-icon">▦</span><span class="hm-label">Grid</span>
+        </button>
+        <!-- Snap: snap objects to grid when repositioning -->
+        <label class="hm-item hm-select-row" title="Snap objects to grid when repositioning">
+          <span class="hm-icon">⇲</span><span class="hm-label">Snap</span>
+          <select class="tb-select" id="sel-grid-snap">
+            <option value="0">OFF</option>
+            <option value="10">10 px</option>
+            <option value="20" selected>20 px</option>
+            <option value="40">40 px</option>
+            <option value="80">80 px</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Hierarchy context menu (hidden by default; positioned at cursor) -->
+      <div id="hier-ctx-menu" class="ctx-menu" role="menu" aria-hidden="true"></div>
+    </header>
+
+    <!-- Main workspace -->
+    <div id="workspace">
+
+      <!-- Left: Scene Hierarchy -->
+      <aside id="panel-hierarchy">
+        <div class="panel-title">SCENE HIERARCHY
+          <div id="hierarchy-resizer" title="Drag to resize"></div>
+        </div>
+        <ul id="hierarchy-list"></ul>
+      </aside>
+
+      <!-- Center: Viewport -->
+      <main id="viewport-area">
+        <div id="viewport-label">SCENE VIEWPORT</div>
+        <div id="canvas-wrapper">
+          <canvas id="game-canvas"></canvas>
+        </div>
+        <div id="viewport-status">
+          <span id="status-state">IDLE</span>
+          <span id="status-entities">Entities: 0</span>
+          <span id="status-time">T: 0.00s</span>
+        </div>
+      </main>
+
+      <!-- Right: Inspector -->
+      <aside id="panel-inspector">
+        <div class="panel-title">INSPECTOR</div>
+        <div id="inspector-content">
+          <div class="inspector-empty">Select an entity to inspect</div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Bottom panel -->
+    <div id="bottom-panel">
+      <div id="bottom-panel-header">
+        <div class="panel-title">WORKSPACE</div>
+      </div>
+      <div id="bottom-panel-body">
+
+        <!-- Script Editor -->
+        <section id="panel-workspace" class="bottom-pane active">
+          <div id="workspace-meta">
+            <div id="workspace-selected">Selected: <span id="workspace-selected-entity">None</span></div>
+            <div id="workspace-mode">Space: <span id="workspace-space-mode">Global</span> (Alt+L)</div>
+          </div>
+          <div id="workspace-controls">
+            <div id="script-list" class="script-list"></div>
+          </div>
+          <div id="workspace-status">Double-click a script to edit it. Drag a script onto the inspector to assign it.</div>
+        </section>
+
+        <!-- Console -->
+        <section id="panel-console" class="bottom-pane active">
+          <div id="console-toolbar">
+            <button class="console-filter-btn active" data-filter="all">ALL</button>
+            <button class="console-filter-btn" data-filter="info">INFO</button>
+            <button class="console-filter-btn" data-filter="warn">WARN</button>
+            <button class="console-filter-btn" data-filter="error">ERROR</button>
+            <button class="console-filter-btn" data-filter="success">OK</button>
+            <button id="btn-console-clear" class="console-clear-btn">CLEAR</button>
+          </div>
+          <div id="console-output"></div>
+        </section>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Floating script editor windows mount here -->
+  <div id="script-windows-layer"></div>
+
+  <!-- Engine Source -->
+  <script type="module" src="src/core/Engine.js"></script>
+</body>
+</html>

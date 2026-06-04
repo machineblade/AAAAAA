@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Altruism Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0c0c0e; color: #c9c9c9; font-family: 'DM Mono', 'Courier New', monospace; min-height: 100vh; }
+.wrapper { max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
+header { padding: 36px 0 20px; border-bottom: 1px solid #1f1f1f; margin-bottom: 32px; display: flex; align-items: baseline; justify-content: space-between; }
+.logo { font-size: 18px; font-weight: 700; color: #f0f0f0; letter-spacing: -0.3px; }
+.logo em { color: #7c6af7; font-style: normal; }
+.header-right { font-size: 11px; color: #3a3a3a; letter-spacing: 0.5px; }
+nav { display: flex; gap: 0; margin-bottom: 40px; border-bottom: 1px solid #1f1f1f; }
+nav button { background: none; border: none; border-bottom: 2px solid transparent; color: #444; font-family: inherit; font-size: 12px; letter-spacing: 0.8px; padding: 10px 20px 10px 0; cursor: pointer; transition: all 0.15s; margin-bottom: -1px; }
+nav button:hover { color: #888; }
+nav button.active { color: #f0f0f0; border-bottom-color: #7c6af7; }
+.section { display: none; }
+.section.visible { display: block; }
+.home-title { font-size: 40px; font-weight: 700; color: #f0f0f0; line-height: 1.15; letter-spacing: -1px; margin-bottom: 36px; }
+.home-title em { color: #7c6af7; font-style: normal; }
+.home-links { display: flex; gap: 10px; }
+.lnk { font-family: inherit; font-size: 12px; letter-spacing: 0.5px; padding: 9px 18px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.lnk-fill { background: #7c6af7; color: #fff; border: none; }
+.lnk-fill:hover { background: #9580ff; }
+.lnk-out { background: none; color: #555; border: 1px solid #222; }
+.lnk-out:hover { border-color: #444; color: #aaa; }
+.sec-title { font-size: 11px; letter-spacing: 1.5px; color: #333; margin-bottom: 20px; text-transform: uppercase; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 10px; }
+.card { background: #111113; border: 1px solid #1c1c1e; border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.15s; display: block; }
+.card:hover { border-color: #2e2b52; background: #13131a; }
+.card-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #0d0d0f; }
+.card-thumb-fallback { width: 100%; aspect-ratio: 16/9; background: #111116; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #2a2a2a; letter-spacing: 1px; }
+.card-body { padding: 14px 14px 16px; }
+.card .label { font-size: 13px; font-weight: 700; color: #e0e0e0; }
+.card .sub { font-size: 11px; color: #383838; margin-top: 4px; line-height: 1.5; }
+.video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.video-card { background: #111113; border: 1px solid #1c1c1e; border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.15s; display: block; }
+.video-card:hover { border-color: #2e2b52; }
+.thumb-wrap { position: relative; aspect-ratio: 16/9; background: #0d0d0f; overflow: hidden; }
+.thumb-wrap img.thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+.thumb-wrap .thumb-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #2a2a2a; letter-spacing: 1px; }
+.thumb-wrap .play-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; }
+.video-card:hover .play-icon { opacity: 1; }
+.play-icon span { background: rgba(124,106,247,0.85); color: #fff; font-size: 11px; padding: 6px 14px; border-radius: 4px; letter-spacing: 1px; }
+.vinfo { padding: 12px 14px; }
+.vtitle { font-size: 13px; font-weight: 700; color: #ddd; }
+.vsub { font-size: 11px; color: #383838; margin-top: 3px; }
+.status-msg { font-size: 12px; padding: 20px 0; letter-spacing: 0.5px; }
+.status-msg.loading { color: #2a2a2a; }
+.status-msg.error { color: #7f1d1d; }
+.overlay { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; padding: 24px; }
+.overlay.open { display: flex; }
+.modal { background: #111113; border: 1px solid #1f1f1f; border-radius: 10px; width: 100%; max-width: 900px; display: flex; flex-direction: column; overflow: hidden; max-height: calc(100vh - 48px); }
+.modal.fullscreen { max-width: 100%; max-height: 100%; border-radius: 0; border: none; position: fixed; inset: 0; z-index: 101; }
+.modal-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #1a1a1a; flex-shrink: 0; }
+.modal-title { font-size: 12px; color: #555; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%; }
+.modal-btns { display: flex; gap: 6px; }
+.modal-btn { background: #1a1a1a; border: 1px solid #252525; color: #555; font-family: inherit; font-size: 11px; letter-spacing: 0.5px; padding: 5px 12px; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+.modal-btn:hover { color: #aaa; border-color: #333; }
+.modal-btn.close-btn:hover { color: #f87171; border-color: #7f1d1d; }
+.modal-content { flex: 1; min-height: 0; }
+.modal-content iframe { width: 100%; height: 100%; min-height: 480px; border: none; display: block; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <header>
+    <div class="logo">Altruism<em>Hub</em></div>
+    <div class="header-right">v1.0</div>
+  </header>
+  <nav>
+    <button class="active" onclick="show('home',this)">home</button>
+    <button onclick="show('games',this)">games</button>
+    <button onclick="show('videos',this)">videos</button>
+  </nav>
+
+  <div id="home" class="section visible">
+    <div class="home-title">GOOD GAMES.<br><em>FUN GAMES.</em></div>
+    <div class="home-links">
+      <button class="lnk lnk-fill" onclick="show('games',document.querySelectorAll('nav button')[1])">games</button>
+      <button class="lnk lnk-out" onclick="show('videos',document.querySelectorAll('nav button')[2])">videos</button>
+    </div>
+  </div>
+
+  <div id="games" class="section">
+    <div class="sec-title">games</div>
+    <div id="games-grid" class="card-grid"><div class="status-msg loading">loading...</div></div>
+  </div>
+
+  <div id="videos" class="section">
+    <div class="sec-title">videos</div>
+    <div id="videos-grid" class="video-grid"><div class="status-msg loading">loading...</div></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-bar">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-btns">
+        <button class="modal-btn" onclick="toggleFullscreen()">&#x26F6; fullscreen</button>
+        <button class="modal-btn close-btn" onclick="closeModal()">&#x2715; close</button>
+      </div>
+    </div>
+    <div class="modal-content">
+      <iframe id="modal-frame" allowfullscreen allow="fullscreen"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('visible');
+  if (btn) btn.classList.add('active');
+}
+
+function openModal(url, title) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-frame').src = url;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('modal').classList.remove('fullscreen');
+  document.getElementById('modal-frame').src = '';
+  document.body.style.overflow = '';
+}
+
+function toggleFullscreen() {
+  document.getElementById('modal').classList.toggle('fullscreen');
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function captureFirstFrame(videoUrl, canvas) {
+  const video = document.createElement('video');
+  video.crossOrigin = 'anonymous';
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = 'metadata';
+  video.addEventListener('seeked', () => {
+    try {
+      const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth || 320;
+      canvas.height = video.videoHeight || 180;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.style.display = 'block';
+      const placeholder = canvas.parentElement.querySelector('.thumb-placeholder');
+      if (placeholder) placeholder.style.display = 'none';
+      const thumbImg = canvas.parentElement.querySelector('.thumb-img');
+      if (thumbImg) thumbImg.style.display = 'none';
+    } catch {}
+    video.remove();
+  }, { once: true });
+  video.addEventListener('error', () => video.remove(), { once: true });
+  video.src = videoUrl;
+  video.load();
+  video.addEventListener('loadedmetadata', () => { video.currentTime = 0.01; }, { once: true });
+}
+
+function gameCard(g) {
+  const folder = g.folder || '';
+  const title = g.title.replace(/'/g, "\\'");
+  return `<div class="card" onclick="openModal('games/${folder}/index.html','${title}')">
+    <img class="card-thumb" src="games/${folder}/thumbnail.png" alt="${g.title}"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="card-thumb-fallback" style="display:none">no thumbnail</div>
+    <div class="card-body">
+      <div class="label">${g.title}</div>
+      <div class="sub">${g.description || ''}</div>
+    </div>
+  </div>`;
+}
+
+function videoCard(v, idx) {
+  let hostname = '';
+  try { hostname = new URL(v.url).hostname.replace('www.', ''); } catch {}
+  const hasThumbnail = !!v.thumbnail;
+  return `<div class="video-card" onclick="openModal('${v.url.replace(/'/g, "\\'")}','${v.name.replace(/'/g, "\\'")}')">
+    <div class="thumb-wrap">
+      ${hasThumbnail
+        ? `<img class="thumb-img" src="${v.thumbnail}" alt="${v.name}" onerror="this.style.display='none'">`
+        : `<div class="thumb-placeholder">no preview</div>`
+      }
+      <canvas id="vthumb-${idx}"></canvas>
+      <div class="play-icon"><span>&#x25B6; play</span></div>
+    </div>
+    <div class="vinfo">
+      <div class="vtitle">${v.name}</div>
+      <div class="vsub">${hostname}</div>
+    </div>
+  </div>`;
+}
+
+async function loadGames() {
+  const grid = document.getElementById('games-grid');
+  try {
+    const res = await fetch('games.json');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const games = data.games || [];
+    grid.innerHTML = games.length
+      ? games.map(gameCard).join('')
+      : '<div class="status-msg error">no games found</div>';
+  } catch {
+    grid.innerHTML = '<div class="status-msg error">couldn\'t load games.json</div>';
+  }
+}
+
+async function loadVideos() {
+  const grid = document.getElementById('videos-grid');
+  try {
+    const res = await fetch('videos.json');
+    if (!res.ok) throw new Error();
+    const videos = await res.json();
+    if (!videos.length) { grid.innerHTML = '<div class="status-msg error">no videos found</div>'; return; }
+    grid.innerHTML = videos.map((v, i) => videoCard(v, i)).join('');
+    videos.forEach((v, i) => {
+      if (!v.thumbnail) {
+        const canvas = document.getElementById(`vthumb-${i}`);
+        if (canvas) captureFirstFrame(v.url, canvas);
+      }
+    });
+  } catch {
+    grid.innerHTML = '<div class="status-msg error">couldn\'t load videos.json</div>';
+  }
+}
+
+loadGames();
+loadVideos();
+</script>
+</body>
+</html>

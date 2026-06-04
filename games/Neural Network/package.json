@@ -1,0 +1,16 @@
+{
+  "name": "snake-nn",
+  "version": "1.0.0",
+  "description": "Snake game trained by a neural network with live NN visualizer, built with PixiJS",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "pixi.js": "^8.0.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

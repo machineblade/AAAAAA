@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multiplayer Snake</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0f;
+    color: #e0e0e0;
+    font-family: 'Space Mono', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  #setup-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px;
+    background: #12121a;
+    border: 1px solid #2a2a3a;
+    border-radius: 12px;
+    max-width: 480px;
+    width: 100%;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: #7fff7f;
+    text-shadow: 0 0 20px #7fff7f44;
+  }
+  .subtitle { font-size: 11px; color: #555; letter-spacing: 2px; }
+  .field-group { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+  label { font-size: 11px; color: #666; letter-spacing: 1px; }
+  input {
+    background: #0a0a0f;
+    border: 1px solid #2a2a3a;
+    color: #e0e0e0;
+    padding: 10px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: #7fff7f; }
+  .btn {
+    background: #7fff7f;
+    color: #0a0a0f;
+    border: none;
+    padding: 12px 32px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .btn:hover { background: #5fd45f; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-secondary {
+    background: transparent;
+    color: #666;
+    border: 1px solid #2a2a3a;
+  }
+  .btn-secondary:hover { background: #1a1a2a; color: #aaa; }
+  .setup-note {
+    font-size: 10px;
+    color: #444;
+    text-align: center;
+    line-height: 1.8;
+    border-top: 1px solid #1a1a2a;
+    padding-top: 16px;
+    width: 100%;
+  }
+  .setup-note a { color: #7fff7f44; }
+  #game-container { display: none; position: relative; }
+  #ui-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .hud-box {
+    background: rgba(10,10,15,0.85);
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+  .hud-score { color: #7fff7f; font-size: 18px; font-weight: 700; }
+  .hud-label { color: #444; font-size: 10px; }
+  #players-list { max-width: 160px; }
+  .player-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+    font-size: 11px;
+  }
+  .player-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  #death-screen {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(10,10,15,0.92);
+    z-index: 20;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .death-title { font-size: 32px; font-weight: 700; color: #ff4444; letter-spacing: 4px; }
+  .death-sub { font-size: 13px; color: #555; }
+  #controls-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #333;
+    letter-spacing: 1px;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #status-bar {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #444;
+    letter-spacing: 1px;
+    pointer-events: none;
+    background: rgba(10,10,15,0.7);
+    padding: 4px 12px;
+    border-radius: 4px;
+    border: 1px solid #1a1a2a;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<div id="setup-screen">
+  <h1>SNAKE.IO</h1>
+
+  <div class="field-group">
+    <label>YOUR NAME</label>
+    <input id="player-name" type="text" placeholder="Player" maxlength="12" />
+  </div>
+
+  <button class="btn" id="join-btn">JOIN GAME</button>
+  <button class="btn btn-secondary" id="solo-btn">PLAY SOLO</button>
+</div>
+
+<div id="game-container">
+  <div id="ui-overlay">
+    <div class="hud-box">
+      <div class="hud-label">SCORE</div>
+      <div class="hud-score" id="score-display">0</div>
+    </div>
+    <div class="hud-box" id="players-list">
+      <div class="hud-label" style="margin-bottom:6px">PLAYERS</div>
+      <div id="players-entries"></div>
+    </div>
+  </div>
+  <div id="status-bar">CONNECTING...</div>
+  <div id="controls-hint">WASD / ARROW KEYS — CHANGE DIRECTION</div>
+  <div id="death-screen">
+    <div class="death-title">YOU DIED</div>
+    <div class="death-sub" id="death-reason">Hit a wall or snake</div>
+    <button class="btn" id="respawn-btn" style="max-width:200px; background:#7fff7f; color:#0a0a0f; pointer-events:all;">RESPAWN</button>
+  </div>
+</div>
+
+<script>
+const GRID_SIZE = 20;
+const CELL = 28;
+const CANVAS_W = GRID_SIZE * CELL;
+const CANVAS_H = GRID_SIZE * CELL;
+const TICK_MS = 140;
+const APPLE_COUNT = 5;
+
+const PLAYER_COLORS = [
+  '#7fff7f','#7fd4ff','#ffb347','#ff7f9f','#c97fff',
+  '#7fffef','#ffe57f','#ff9f7f','#a0a0ff','#ff7fbf'
+];
+
+const SB_URL = 'https://olfcgcnalxuyqantysfy.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9sZmNnY25hbHh1eXFhbnR5c2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODQ2NjYsImV4cCI6MjA5Mzk2MDY2Nn0.GRCt2P8QhS7waSR7u5vKa0JXDeFFf9QyoVK8KGzj274';
+
+let supabase_client = null;
+let playerId = 'player_' + Math.random().toString(36).slice(2,9);
+let playerName = 'Player';
+let playerColor = PLAYER_COLORS[Math.floor(Math.random()*PLAYER_COLORS.length)];
+let mySnake = null;
+let allPlayers = {};
+let apples = [];
+let tickTimer = null;
+let app, gridGfx, snakeLayers, appleLayer;
+let soloMode = false;
+let dead = false;
+let score = 0;
+
+// FIX #2: sync delete on tab close via sendBeacon
+window.addEventListener('beforeunload', () => {
+  if(!supabase_client || soloMode) return;
+  // sendBeacon is fire-and-forget but survives tab close
+  const url = SB_URL + '/rest/v1/snake_state?id=eq.' + playerId;
+  navigator.sendBeacon(url + '&_method=DELETE',
+    new Blob([JSON.stringify({})], {type:'application/json'})
+  );
+  // Also try sync XHR as fallback
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('DELETE', SB_URL + '/rest/v1/snake_state?id=eq.' + playerId, false);
+    xhr.setRequestHeader('apikey', SB_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + SB_KEY);
+    xhr.send();
+  } catch(e) {}
+});
+
+function randInt(n) { return Math.floor(Math.random()*n); }
+function posKey(x,y) { return x+','+y; }
+
+function randomSpawn() {
+  return {
+    x: 3 + randInt(GRID_SIZE-6),
+    y: 3 + randInt(GRID_SIZE-6)
+  };
+}
+
+function createSnake(name, color) {
+  const {x,y} = randomSpawn();
+  return {
+    id: playerId,
+    player_name: name,
+    segments: [{x,y},{x:x-1,y},{x:x-2,y}],
+    direction: 'right',
+    pendingDir: 'right',
+    score: 0,
+    color,
+    alive: true
+  };
+}
+
+function spawnApples() {
+  while(apples.length < APPLE_COUNT) {
+    apples.push({ x: randInt(GRID_SIZE), y: randInt(GRID_SIZE) });
+  }
+}
+
+function initPixi() {
+  app = new PIXI.Application({
+    width: CANVAS_W,
+    height: CANVAS_H,
+    backgroundColor: 0x0a0a0f,
+    antialias: false,
+    resolution: 1
+  });
+  document.getElementById('game-container').appendChild(app.view);
+  app.view.style.borderRadius = '4px';
+  app.view.style.border = '1px solid #1a1a2a';
+
+  gridGfx = new PIXI.Graphics();
+  app.stage.addChild(gridGfx);
+  drawGrid();
+
+  appleLayer = new PIXI.Container();
+  app.stage.addChild(appleLayer);
+
+  snakeLayers = new PIXI.Container();
+  app.stage.addChild(snakeLayers);
+}
+
+function drawGrid() {
+  gridGfx.clear();
+  gridGfx.lineStyle(0.5, 0x1a1a2a, 1);
+  for(let x=0; x<=GRID_SIZE; x++) {
+    gridGfx.moveTo(x*CELL, 0);
+    gridGfx.lineTo(x*CELL, CANVAS_H);
+  }
+  for(let y=0; y<=GRID_SIZE; y++) {
+    gridGfx.moveTo(0, y*CELL);
+    gridGfx.lineTo(CANVAS_W, y*CELL);
+  }
+  gridGfx.lineStyle(1, 0x2a2a4a, 1);
+  gridGfx.drawRect(0,0,CANVAS_W,CANVAS_H);
+}
+
+function hexToNum(hex) {
+  return parseInt(hex.replace('#',''), 16);
+}
+
+function darkenHex(hex) {
+  const n = parseInt(hex.replace('#',''),16);
+  const r = Math.floor(((n>>16)&0xff)*0.55);
+  const g = Math.floor(((n>>8)&0xff)*0.55);
+  const b = Math.floor((n&0xff)*0.55);
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+function renderSnake(snake) {
+  // FIX #1: look up layer in snakeLayers (not overlayLayer)
+  let layer = snakeLayers.getChildByName('snake_'+snake.id);
+  if(!layer) {
+    layer = new PIXI.Container();
+    layer.name = 'snake_'+snake.id;
+    snakeLayers.addChild(layer);
+  }
+  layer.removeChildren();
+  if(!snake.alive || !snake.segments || !snake.segments.length) return;
+
+  const col = hexToNum(snake.color);
+  const darkcol = hexToNum(darkenHex(snake.color));
+  const total = snake.segments.length;
+
+  // FIX #3: draw ALL segments first, then add ONE label after the loop
+  snake.segments.forEach((seg, i) => {
+    const g = new PIXI.Graphics();
+    const px = seg.x * CELL + 2;
+    const py = seg.y * CELL + 2;
+    const size = CELL - 4;
+
+    if(i === 0) {
+      // Head
+      g.beginFill(col, 1);
+      g.drawRoundedRect(px, py, size, size, 5);
+      g.endFill();
+      // Eyes
+      g.beginFill(0x0a0a0f);
+      g.drawCircle(px + size*0.28, py + size*0.35, 2.2);
+      g.drawCircle(px + size*0.72, py + size*0.35, 2.2);
+      g.endFill();
+      g.beginFill(0xffffff);
+      g.drawCircle(px + size*0.28 + 0.7, py + size*0.35 - 0.7, 0.9);
+      g.drawCircle(px + size*0.72 + 0.7, py + size*0.35 - 0.7, 0.9);
+      g.endFill();
+    } else {
+      // Body — fade toward tail
+      const fade = Math.max(0.3, 1 - i / (total + 1));
+      g.beginFill(darkcol, fade);
+      g.drawRoundedRect(px+1, py+1, size-2, size-2, 3);
+      g.endFill();
+    }
+    layer.addChild(g);
+  });
+
+  // ONE name label above the head only
+  const head = snake.segments[0];
+  const label = new PIXI.Text(snake.player_name, {
+    fontFamily: 'Space Mono, monospace',
+    fontSize: 9,
+    fill: col,
+    align: 'center'
+  });
+  label.anchor.set(0.5, 1);
+  label.x = head.x * CELL + CELL / 2;
+  label.y = head.y * CELL - 2;
+  layer.addChild(label);
+}
+
+function renderApples() {
+  appleLayer.removeChildren();
+  apples.forEach(a => {
+    const g = new PIXI.Graphics();
+    const cx = a.x*CELL + CELL/2;
+    const cy = a.y*CELL + CELL/2;
+    const r = CELL/2 - 3;
+    g.beginFill(0xdd1111, 1);
+    g.drawCircle(cx, cy, r);
+    g.endFill();
+    // Highlight
+    g.beginFill(0xff6666, 0.45);
+    g.drawCircle(cx - r*0.28, cy - r*0.28, r*0.32);
+    g.endFill();
+    // Stem
+    g.lineStyle(1.5, 0x3a7a1a, 1);
+    g.moveTo(cx, cy - r);
+    g.lineTo(cx + 2, cy - r - 4);
+    appleLayer.addChild(g);
+  });
+}
+
+function renderAll() {
+  renderApples();
+  if(mySnake) renderSnake(mySnake);
+  Object.values(allPlayers).forEach(p => {
+    if(p.id !== playerId) renderSnake(p);
+  });
+  updateHUD();
+}
+
+function updateHUD() {
+  document.getElementById('score-display').textContent = score;
+  const entries = document.getElementById('players-entries');
+  const players = [mySnake, ...Object.values(allPlayers).filter(p=>p.id!==playerId)].filter(Boolean);
+  entries.innerHTML = players.map(p=>`
+    <div class="player-entry">
+      <div class="player-dot" style="background:${p.color}"></div>
+      <span style="color:${p.id===playerId?p.color:'#888'};font-size:10px">${(p.player_name||'').slice(0,10)}</span>
+      <span style="color:#444;font-size:10px;margin-left:auto">${p.score||0}</span>
+    </div>
+  `).join('');
+}
+
+function tick() {
+  if(!mySnake || !mySnake.alive) return;
+
+  mySnake.direction = mySnake.pendingDir;
+  const head = mySnake.segments[0];
+  let nx = head.x, ny = head.y;
+  if(mySnake.direction==='right') nx++;
+  else if(mySnake.direction==='left') nx--;
+  else if(mySnake.direction==='up') ny--;
+  else if(mySnake.direction==='down') ny++;
+
+  // Wall collision
+  if(nx<0||nx>=GRID_SIZE||ny<0||ny>=GRID_SIZE) { die('Hit the wall!'); return; }
+
+  // Self collision (skip tail tip since it will move away)
+  for(let i=0; i<mySnake.segments.length-1; i++) {
+    if(mySnake.segments[i].x===nx && mySnake.segments[i].y===ny) { die('Ate yourself!'); return; }
+  }
+
+  // Other snake collision
+  for(const p of Object.values(allPlayers)) {
+    if(p.alive && p.segments) {
+      for(const s of p.segments) {
+        if(s.x===nx && s.y===ny) { die('Hit ' + (p.player_name||'another snake') + '!'); return; }
+      }
+    }
+  }
+
+  // Apple check
+  const aidx = apples.findIndex(a=>a.x===nx && a.y===ny);
+  const ate = aidx !== -1;
+
+  mySnake.segments.unshift({x:nx, y:ny});
+  if(!ate) {
+    mySnake.segments.pop(); // normal move: remove tail
+  } else {
+    apples.splice(aidx, 1);
+    score++;
+    mySnake.score = score;
+    spawnApples();
+  }
+
+  renderAll();
+  if(!soloMode) broadcastState();
+}
+
+function die(reason) {
+  dead = true;
+  mySnake.alive = false;
+  document.getElementById('death-reason').textContent = reason;
+  document.getElementById('death-screen').style.display = 'flex';
+  renderAll();
+  if(!soloMode) broadcastState();
+}
+
+function respawn() {
+  dead = false;
+  score = 0;
+  mySnake = createSnake(playerName, playerColor);
+  document.getElementById('death-screen').style.display = 'none';
+  renderAll();
+  if(!soloMode) broadcastState();
+}
+
+const OPPOSITE = {right:'left',left:'right',up:'down',down:'up'};
+document.addEventListener('keydown', e => {
+  if(!mySnake || !mySnake.alive) return;
+  let d = null;
+  if(e.key==='ArrowUp'   ||e.key==='w'||e.key==='W') d='up';
+  else if(e.key==='ArrowDown' ||e.key==='s'||e.key==='S') d='down';
+  else if(e.key==='ArrowLeft' ||e.key==='a'||e.key==='A') d='left';
+  else if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') d='right';
+  if(d && d !== OPPOSITE[mySnake.direction]) {
+    mySnake.pendingDir = d;
+    e.preventDefault();
+  }
+});
+
+async function broadcastState() {
+  if(!supabase_client || !mySnake) return;
+  try {
+    await supabase_client.from('snake_state').upsert({
+      id: playerId,
+      player_name: playerName,
+      segments: mySnake.segments,
+      direction: mySnake.direction,
+      score: mySnake.score,
+      color: playerColor,
+      alive: mySnake.alive,
+      updated_at: new Date().toISOString()
+    });
+  } catch(e) { console.warn('broadcast err', e); }
+}
+
+async function subscribeToPlayers() {
+  if(!supabase_client) return;
+  const { data } = await supabase_client
+    .from('snake_state')
+    .select('*')
+    .neq('id', playerId);
+  if(data) data.forEach(p => { allPlayers[p.id] = p; });
+
+  supabase_client
+    .channel('snake_realtime')
+    .on('postgres_changes',
+      {event:'*', schema:'public', table:'snake_state'},
+      payload => {
+        const p = payload.new || payload.old;
+        if(!p || p.id === playerId) return;
+        if(payload.eventType === 'DELETE') {
+          delete allPlayers[p.id];
+          const layer = snakeLayers.getChildByName('snake_'+p.id);
+          if(layer) snakeLayers.removeChild(layer);
+        } else {
+          allPlayers[p.id] = p;
+        }
+        renderAll();
+      }
+    )
+    .subscribe(status => {
+      const bar = document.getElementById('status-bar');
+      if(bar) bar.textContent = status === 'SUBSCRIBED' ? '● CONNECTED' : '○ ' + status;
+    });
+}
+
+async function cleanupOldPlayers() {
+  if(!supabase_client) return;
+  const cutoff = new Date(Date.now() - 30000).toISOString();
+  await supabase_client.from('snake_state').delete().lt('updated_at', cutoff).neq('id', playerId);
+}
+
+function startGame() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('game-container').style.display = 'block';
+
+  initPixi();
+  spawnApples();
+  mySnake = createSnake(playerName, playerColor);
+
+  if(!soloMode) {
+    subscribeToPlayers();
+    broadcastState();
+    cleanupOldPlayers();
+    setInterval(cleanupOldPlayers, 15000);
+  } else {
+    document.getElementById('status-bar').textContent = '▶ SOLO MODE';
+  }
+
+  tickTimer = setInterval(tick, TICK_MS);
+  renderAll();
+}
+
+document.getElementById('join-btn').addEventListener('click', async () => {
+  playerName = document.getElementById('player-name').value.trim() || 'Player';
+  try {
+    supabase_client = supabase.createClient(SB_URL, SB_KEY);
+    soloMode = false;
+    startGame();
+  } catch(e) { alert('Failed to connect: ' + e.message); }
+});
+
+document.getElementById('solo-btn').addEventListener('click', () => {
+  playerName = document.getElementById('player-name').value.trim() || 'Player';
+  soloMode = true;
+  startGame();
+});
+
+document.getElementById('respawn-btn').addEventListener('click', respawn);
+</script>
+</body>
+</html>
