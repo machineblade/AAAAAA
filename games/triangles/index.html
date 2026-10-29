@@ -1,62 +1,214 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="./favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="./style.css">
-    <title>Triangles</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"
-        integrity="sha512-xi/RZRIF/S0hJ+yJJYuZ5yk6/8pCiRlEXZzoguSMl+vk2i3m6UjUO/WcZ11blRL/O+rnj94JRGwt/CHbc9+6EA=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"
-        integrity="sha512-6+7rTBmR6pRFe9fa0vCFjFaHZj/XYa7774bEBzRtxgdpIJOS++R3cKd6Prg/eJmxtsJotd8KAg4g57uuVQsZKA=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Altruism Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0c0c0e; color: #c9c9c9; font-family: 'DM Mono', 'Courier New', monospace; min-height: 100vh; }
+.wrapper { max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
+header { padding: 36px 0 20px; border-bottom: 1px solid #1f1f1f; margin-bottom: 32px; display: flex; align-items: baseline; justify-content: space-between; }
+.logo { font-size: 18px; font-weight: 700; color: #f0f0f0; letter-spacing: -0.3px; }
+.logo em { color: #7c6af7; font-style: normal; }
+.header-right { font-size: 11px; color: #3a3a3a; letter-spacing: 0.5px; }
+nav { display: flex; gap: 0; margin-bottom: 40px; border-bottom: 1px solid #1f1f1f; }
+nav button { background: none; border: none; border-bottom: 2px solid transparent; color: #444; font-family: inherit; font-size: 12px; letter-spacing: 0.8px; padding: 10px 20px 10px 0; cursor: pointer; transition: all 0.15s; margin-bottom: -1px; }
+nav button:hover { color: #888; }
+nav button.active { color: #f0f0f0; border-bottom-color: #7c6af7; }
+.section { display: none; }
+.section.visible { display: block; }
+.home-title { font-size: 40px; font-weight: 700; color: #f0f0f0; line-height: 1.15; letter-spacing: -1px; margin-bottom: 36px; }
+.home-title em { color: #7c6af7; font-style: normal; }
+.home-links { display: flex; gap: 10px; }
+.lnk { font-family: inherit; font-size: 12px; letter-spacing: 0.5px; padding: 9px 18px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.lnk-fill { background: #7c6af7; color: #fff; border: none; }
+.lnk-fill:hover { background: #9580ff; }
+.lnk-out { background: none; color: #555; border: 1px solid #222; }
+.lnk-out:hover { border-color: #444; color: #aaa; }
+.sec-title { font-size: 11px; letter-spacing: 1.5px; color: #333; margin-bottom: 20px; text-transform: uppercase; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 10px; }
+.card { background: #111113; border: 1px solid #1c1c1e; border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.15s; display: block; }
+.card:hover { border-color: #2e2b52; background: #13131a; }
+.card-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #0d0d0f; }
+.card-thumb-fallback { width: 100%; aspect-ratio: 16/9; background: #111116; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #2a2a2a; letter-spacing: 1px; }
+.card-body { padding: 14px 14px 16px; }
+.card .label { font-size: 13px; font-weight: 700; color: #e0e0e0; }
+.card .sub { font-size: 11px; color: #383838; margin-top: 4px; line-height: 1.5; }
+.status-msg { font-size: 12px; padding: 20px 0; letter-spacing: 0.5px; }
+.status-msg.loading { color: #2a2a2a; }
+.status-msg.error { color: #7f1d1d; }
+.overlay { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; padding: 24px; }
+.overlay.open { display: flex; }
+.modal { background: #111113; border: 1px solid #1f1f1f; border-radius: 10px; width: 100%; max-width: 900px; display: flex; flex-direction: column; overflow: hidden; max-height: calc(100vh - 48px); }
+.modal.fullscreen { max-width: 100%; max-height: 100%; border-radius: 0; border: none; position: fixed; inset: 0; z-index: 101; }
+.modal-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #1a1a1a; flex-shrink: 0; }
+.modal-title { font-size: 12px; color: #555; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%; }
+.modal-btns { display: flex; gap: 6px; }
+.modal-btn { background: #1a1a1a; border: 1px solid #252525; color: #555; font-family: inherit; font-size: 11px; letter-spacing: 0.5px; padding: 5px 12px; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+.modal-btn:hover { color: #aaa; border-color: #333; }
+.modal-btn.close-btn:hover { color: #f87171; border-color: #7f1d1d; }
+.modal-content { flex: 1; min-height: 0; overflow: auto; }
+.modal-content iframe { width: 100%; height: 100%; min-height: 480px; border: none; display: block; }
+.modal-img { display: none; max-width: 100%; max-height: calc(100vh - 120px); margin: 0 auto; object-fit: contain; }
+.modal-img.show { display: block; }
+</style>
 </head>
-
 <body>
-    <canvas id="canvas"></canvas>
-    <div id="triangles"></div>
 
-    <!-- Top-left: New Game -->
-    <button id="newgame-btn">⟳ New Game</button>
+<div class="wrapper">
+  <header>
+    <div class="logo">Altruism<em>Hub</em></div>
+    <div class="header-right">v1.0</div>
+  </header>
+  <nav>
+    <button class="active" onclick="show('home',this)">home</button>
+    <button onclick="show('games',this)">games</button>
+    <button onclick="show('images',this)">images</button>
+  </nav>
 
-    <!-- Bottom-right: Fullscreen -->
-    <button id="fullscreen-btn">⛶</button>
-
-    <div class="sliders">
-        <label class="slider-label">
-            <span class="slider-title">Bounciness</span>
-            <div class="slider-row">
-                <input type="range" min="0" max="1" step="0.01" value="0.7" id="bouncyslider">
-                <span class="slider-value" id="bouncylabel">0.70</span>
-            </div>
-        </label>
-        <label class="slider-label">
-            <span class="slider-title">Friction</span>
-            <div class="slider-row">
-                <input type="range" min="0" max="1" step="0.01" value="0" id="frictionslider">
-                <span class="slider-value" id="frictionlabel">0.00</span>
-            </div>
-        </label>
-        <label class="slider-label">
-            <span class="slider-title">Inertia</span>
-            <div class="slider-row">
-                <input type="range" min="0" max="1" step="0.01" value="1" id="inertiaslider">
-                <span class="slider-value" id="inertialabel">1.00</span>
-            </div>
-        </label>
-        <label class="slider-label">
-            <span class="slider-title">Shrink Time (s)</span>
-            <div class="slider-row">
-                <input type="range" min="5" max="120" step="1" value="30" id="timeslider">
-                <span class="slider-value" id="timelabel">30s</span>
-            </div>
-        </label>
+  <div id="home" class="section visible">
+    <div class="home-title">GOOD GAMES.<br><em>FUN GAMES.</em></div>
+    <div class="home-links">
+      <button class="lnk lnk-fill" onclick="show('games',document.querySelectorAll('nav button')[1])">games</button>
+      <button class="lnk lnk-out" onclick="show('images',document.querySelectorAll('nav button')[2])">images</button>
     </div>
+  </div>
 
-    <script type="module" src="./main.js"></script>
+  <div id="games" class="section">
+    <div class="sec-title">games</div>
+    <div id="games-grid" class="card-grid"><div class="status-msg loading">loading...</div></div>
+  </div>
+
+  <div id="images" class="section">
+    <div class="sec-title">images</div>
+    <div id="images-grid" class="card-grid"><div class="status-msg loading">loading...</div></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-bar">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-btns">
+        <button class="modal-btn" onclick="toggleFullscreen()">&#x26F6; fullscreen</button>
+        <button class="modal-btn close-btn" onclick="closeModal()">&#x2715; close</button>
+      </div>
+    </div>
+    <div class="modal-content">
+      <iframe id="modal-frame" allowfullscreen allow="fullscreen"></iframe>
+      <img id="modal-img" class="modal-img" alt="">
+    </div>
+  </div>
+</div>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('visible');
+  if (btn) btn.classList.add('active');
+}
+
+function openModal(url, title) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-img').classList.remove('show');
+  document.getElementById('modal-frame').style.display = 'block';
+  document.getElementById('modal-frame').src = url;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function openImage(url, title) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-frame').src = '';
+  document.getElementById('modal-frame').style.display = 'none';
+  const img = document.getElementById('modal-img');
+  img.src = url;
+  img.alt = title;
+  img.classList.add('show');
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('modal').classList.remove('fullscreen');
+  document.getElementById('modal-frame').src = '';
+  document.getElementById('modal-img').src = '';
+  document.getElementById('modal-img').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function toggleFullscreen() {
+  document.getElementById('modal').classList.toggle('fullscreen');
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function gameCard(g) {
+  const folder = g.folder || '';
+  const title = g.title.replace(/'/g, "\\'");
+  return `<div class="card" onclick="openModal('games/${folder}/index.html','${title}')">
+    <img class="card-thumb" src="games/${folder}/thumbnail.png" alt="${g.title}"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="card-thumb-fallback" style="display:none">no thumbnail</div>
+    <div class="card-body">
+      <div class="label">${g.title}</div>
+      <div class="sub">${g.description || ''}</div>
+    </div>
+  </div>`;
+}
+
+function imageCard(im) {
+  const safeUrl = im.url.replace(/'/g, "\\'");
+  const safeName = im.name.replace(/'/g, "\\'");
+  return `<div class="card" onclick="openImage('${safeUrl}','${safeName}')">
+    <img class="card-thumb" src="${im.url}" alt="${im.name}" loading="lazy"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="card-thumb-fallback" style="display:none">failed to load</div>
+    <div class="card-body">
+      <div class="label">${im.name}</div>
+    </div>
+  </div>`;
+}
+
+async function loadGames() {
+  const grid = document.getElementById('games-grid');
+  try {
+    const res = await fetch('games.json');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const games = data.games || [];
+    grid.innerHTML = games.length
+      ? games.map(gameCard).join('')
+      : '<div class="status-msg error">no games found</div>';
+  } catch {
+    grid.innerHTML = '<div class="status-msg error">couldn\'t load games.json</div>';
+  }
+}
+
+async function loadImages() {
+  const grid = document.getElementById('images-grid');
+  try {
+    const res = await fetch('images.json');
+    if (!res.ok) throw new Error();
+    const images = await res.json();
+    grid.innerHTML = images.length
+      ? images.map(imageCard).join('')
+      : '<div class="status-msg error">no images found</div>';
+  } catch {
+    grid.innerHTML = '<div class="status-msg error">couldn\'t load images.json</div>';
+  }
+}
+
+loadGames();
+loadImages();
+</script>
 </body>
-
 </html>
