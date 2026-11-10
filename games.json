@@ -56,11 +56,6 @@
             "description": "advanced"
         },
         {
-            "title": "Multiplayer Snake",
-            "folder": "multiplayersnake",
-            "description": "advanceded"
-        },
-        {
             "title": "Sentence Generator",
             "folder": "sentencegen",
             "description": "advancededed"
@@ -69,6 +64,51 @@
             "title": "Sand Boxels",
             "folder":"sandboxels",
             "description":"advancedededed"
+        },
+        {
+            "title": "Retro Bowl",
+            "folder": "retrobowl",
+            "description": "Retrobowl finally added!"
+        },
+        {
+            "title": "Soccer Random",
+            "folder": "soccorrandom",
+            "description": "Soccer Random finally added!"
+        },
+        {
+            "title": "Worlds Hardest Game",
+            "folder": "worldshardestgame",
+            "description": "Worlds Hardest Game finally added!"
+        },
+        {
+            "title": "Monkey Mart",
+            "folder": "monkeymart",
+            "description": "Monkey Mart finally added!"
+        },
+        {
+            "title": "Bitlife",
+            "folder": "bitlife",
+            "description": "bitlife.,,,"
+        },
+        {
+            "title": "Cookie Clicker",
+            "folder": "cookieclicker",
+            "description": "cloiippylcicper!"
+        },
+        {
+            "title": "ROCKET LEAGUE",
+            "folder": "rocketleague",
+            "description": "eockelgeauge.,,,"
+        },
+        {
+            "title": "driftboss",
+            "folder": "driftboss",
+            "description": "aigfh9ua45t"
+        },
+        {
+            "title": "drive mad",
+            "folder": "drivemad",
+            "description": "aigfh9ua45t349058398"
         }
     ]
 }
